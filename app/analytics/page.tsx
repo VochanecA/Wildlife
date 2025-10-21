@@ -15,29 +15,29 @@ import { Bar, BarChart, Line, LineChart, Pie, PieChart, CartesianGrid, XAxis, YA
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 const speciesData = [
-  { species: "Canada Geese", count: 145, percentage: 32 },
-  { species: "Gulls", count: 98, percentage: 22 },
-  { species: "Starlings", count: 87, percentage: 19 },
-  { species: "Hawks", count: 56, percentage: 12 },
-  { species: "Crows", count: 43, percentage: 10 },
-  { species: "Other", count: 23, percentage: 5 },
+  { species: "Kanadske guske", count: 145, percentage: 32 },
+  { species: "Galebovi", count: 98, percentage: 22 },
+  { species: "Čvorci", count: 87, percentage: 19 },
+  { species: "Jastrebovi", count: 56, percentage: 12 },
+  { species: "Vrane", count: 43, percentage: 10 },
+  { species: "Ostalo", count: 23, percentage: 5 },
 ]
 
 const monthlyTrends = [
   { month: "Jul", sightings: 45, hazards: 8 },
-  { month: "Aug", sightings: 52, hazards: 12 },
+  { month: "Avg", sightings: 52, hazards: 12 },
   { month: "Sep", sightings: 68, hazards: 15 },
-  { month: "Oct", sightings: 89, hazards: 18 },
+  { month: "Okt", sightings: 89, hazards: 18 },
   { month: "Nov", sightings: 95, hazards: 22 },
   { month: "Dec", sightings: 78, hazards: 16 },
   { month: "Jan", sightings: 72, hazards: 14 },
 ]
 
 const severityData = [
-  { severity: "Low", count: 125, fill: "hsl(var(--chart-3))" },
-  { severity: "Medium", count: 178, fill: "hsl(var(--chart-4))" },
-  { severity: "High", count: 89, fill: "hsl(var(--chart-5))" },
-  { severity: "Critical", count: 32, fill: "hsl(var(--destructive))" },
+  { severity: "Nisko", count: 125, fill: "hsl(var(--chart-3))" },
+  { severity: "Srednje", count: 178, fill: "hsl(var(--chart-4))" },
+  { severity: "Visoko", count: 89, fill: "hsl(var(--chart-5))" },
+  { severity: "Kritično", count: 32, fill: "hsl(var(--destructive))" },
 ]
 
 const timeOfDayData = [
@@ -50,11 +50,11 @@ const timeOfDayData = [
 ]
 
 const locationData = [
-  { location: "Runway 27", incidents: 45 },
-  { location: "Taxiway B", incidents: 32 },
-  { location: "Terminal Area", incidents: 28 },
-  { location: "North Field", incidents: 25 },
-  { location: "Perimeter", incidents: 18 },
+  { location: "Pista 27", incidents: 45 },
+  { location: "Taksi staza B", incidents: 32 },
+  { location: "Terminal", incidents: 28 },
+  { location: "Sjeverno polje", incidents: 25 },
+  { location: "Perimetar", incidents: 18 },
 ]
 
 export default function AnalyticsPage() {
@@ -65,24 +65,24 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Wildlife Analytics</h1>
-          <p className="text-muted-foreground">Comprehensive wildlife management data analysis</p>
+          <h1 className="text-3xl font-bold tracking-tight">Analitika divljih životinja</h1>
+          <p className="text-muted-foreground">Detaljna analiza upravljanja divljim životinjama</p>
         </div>
         <Button>
           <Download className="w-4 h-4 mr-2" />
-          Export Report
+          Izvezi izvještaj
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Customize your analytics view</CardDescription>
+          <CardTitle>Filteri</CardTitle>
+          <CardDescription>Podesi prikaz analitike</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
             <div className="space-y-2">
-              <Label>Date From</Label>
+              <Label>Od datuma</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -90,7 +90,7 @@ export default function AnalyticsPage() {
                     className={cn("w-full justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFrom ? format(dateFrom, "PPP") : <span>Pick a date</span>}
+                    {dateFrom ? format(dateFrom, "PPP") : <span>Izaberi datum</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -99,7 +99,7 @@ export default function AnalyticsPage() {
               </Popover>
             </div>
             <div className="space-y-2">
-              <Label>Date To</Label>
+              <Label>Do datuma</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -107,7 +107,7 @@ export default function AnalyticsPage() {
                     className={cn("w-full justify-start text-left font-normal", !dateTo && "text-muted-foreground")}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateTo ? format(dateTo, "PPP") : <span>Pick a date</span>}
+                    {dateTo ? format(dateTo, "PPP") : <span>Izaberi datum</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -116,36 +116,44 @@ export default function AnalyticsPage() {
               </Popover>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="location-filter">Location</Label>
+              <Label htmlFor="location-filter">Lokacija</Label>
               <Select>
                 <SelectTrigger id="location-filter">
-                  <SelectValue placeholder="All locations" />
+                  <SelectValue placeholder="Sve lokacije" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All locations</SelectItem>
-                  <SelectItem value="runway">Runways</SelectItem>
-                  <SelectItem value="taxiway">Taxiways</SelectItem>
-                  <SelectItem value="terminal">Terminal Area</SelectItem>
+                  <SelectItem value="all">Sve lokacije</SelectItem>
+                  <SelectItem value="runway">Piste</SelectItem>
+                  <SelectItem value="taxiway">Taksi staze</SelectItem>
+                  <SelectItem value="terminal">Terminal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="species-filter">Species</Label>
+              <Label htmlFor="species-filter">Vrste</Label>
               <Select>
                 <SelectTrigger id="species-filter">
-                  <SelectValue placeholder="All species" />
+                  <SelectValue placeholder="Sve vrste" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All species</SelectItem>
-                  <SelectItem value="geese">Canada Geese</SelectItem>
-                  <SelectItem value="gulls">Gulls</SelectItem>
-                  <SelectItem value="hawks">Hawks</SelectItem>
+                  <SelectItem value="all">Sve vrste</SelectItem>
+                  <SelectItem value="geese">Kanadske guske</SelectItem>
+                  <SelectItem value="gulls">Galebovi</SelectItem>
+                  <SelectItem value="hawks">Jastrebovi</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Pregled</TabsTrigger>
+          <TabsTrigger value="species">Analiza vrsta</TabsTrigger>
+          <TabsTrigger value="temporal">Vremenski obrasci</TabsTrigger>
+          <TabsTrigger value="locations">Analiza lokacija</TabsTrigger>
+        </TabsList>
 
       <Tabs defaultValue="overview">
         <TabsList>
