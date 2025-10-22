@@ -142,26 +142,58 @@ const exportToPDF = async (element: HTMLElement, analyticsData: AnalyticsData) =
       logging: false,
       removeContainer: true,
       onclone: (clonedDoc) => {
-        // Zamijeni moderne CSS funkcije sa hex bojama
-        const elements = clonedDoc.querySelectorAll('[class*="bg-"], [class*="text-"], [class*="border-"], [class*="from-"], [class*="to-"]')
-        elements.forEach((el: any) => {
-          // Ukloni klase koje koriste oklch
-          el.className = el.className.replace(/\b(bg-|text-|border-|from-|to-)[^\s]*/g, '')
-        })
-        
-        // Dodaj inline stilove sa hex bojama
-        const cards = clonedDoc.querySelectorAll('.bg-gradient-to-br')
-        cards.forEach((card: any, index) => {
-          const colors = [
-            { bg: '#dbeafe', border: '#93c5fd' }, // blue
-            { bg: '#fee2e2', border: '#fca5a5' }, // red
-            { bg: '#dcfce7', border: '#86efac' }, // green
-            { bg: '#f3e8ff', border: '#c4b5fd' }  // purple
-          ]
-          const color = colors[index % colors.length]
-          card.style.background = `linear-gradient(135deg, ${color.bg} 0%, #ffffff 100%)`
-          card.style.borderColor = color.border
-        })
+        try {
+          // Sigurno uklanjanje Tailwind klasa koje koriste oklch
+          const elements = clonedDoc.querySelectorAll('*')
+          elements.forEach((el: any) => {
+            if (el.className && typeof el.className === 'string') {
+              // Ukloni klase koje koriste oklch
+              el.className = el.className.replace(/\b(bg-|text-|border-|from-|to-|via-|via-|stroke-|fill-|ring-|shadow-|blur-|grayscale-)[^\s]*/g, '')
+              // Ukloni klase za animacije i transition
+              el.className = el.className.replace(/\b(animate-|transition-|duration-|ease-|delay-)[^\s]*/g, '')
+            }
+            
+            // Dodaj osnovne stilove za čitljivost
+            if (el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3') {
+              el.style.color = '#1f2937'
+              el.style.fontWeight = 'bold'
+            }
+            
+            if (el.tagName === 'P') {
+              el.style.color = '#4b5563'
+            }
+          })
+          
+          // Dodaj inline stilove za metričke kartice
+          const cards = clonedDoc.querySelectorAll('.grid > div > div') // Metričke kartice
+          cards.forEach((card: any, index) => {
+            const colors = [
+              { bg: '#dbeafe', border: '#93c5fd', text: '#1d4ed8' }, // blue
+              { bg: '#fee2e2', border: '#fca5a5', text: '#dc2626' }, // red
+              { bg: '#dcfce7', border: '#86efac', text: '#16a34a' }, // green
+              { bg: '#f3e8ff', border: '#c4b5fd', text: '#7c3aed' }  // purple
+            ]
+            const color = colors[index % colors.length]
+            if (color) {
+              card.style.background = `linear-gradient(135deg, ${color.bg} 0%, #ffffff 100%)`
+              card.style.border = `1px solid ${color.border}`
+              card.style.borderRadius = '8px'
+            }
+          })
+
+          // Dodaj stilove za chart kontejnere
+          const chartContainers = clonedDoc.querySelectorAll('.h-\\[300px\\], .h-\\[400px\\]')
+          chartContainers.forEach((container: any) => {
+            container.style.border = '1px solid #e5e7eb'
+            container.style.borderRadius = '8px'
+            container.style.padding = '16px'
+            container.style.backgroundColor = '#ffffff'
+          })
+
+        } catch (error) {
+          console.log('Greška u onclone:', error)
+          // Nastavi bez obrade klasa ako dođe do greške
+        }
       }
     })
 
@@ -175,6 +207,136 @@ const exportToPDF = async (element: HTMLElement, analyticsData: AnalyticsData) =
     }
 
     pdf.addImage(imgData, 'JPEG', 10, currentY, imgWidth, imgHeight)
+
+    // Footer
+    const pageCount = pdf.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+      pdf.setPage(i)
+      pdf.setFontSize(8)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(100, 100, 100)
+      pdf.text(`Strana ${i} od ${pageCount}`, pageWidth - 20, pageHeight - 10)
+      pdf.text('© 2024 Aerodrom Tivat - Wildlife Management', 10, pageHeight - 10)
+    }
+
+    const filename = `analitika-divljaci-${new Date().toISOString().split('T')[0]}.pdf`
+    pdf.save(filename)
+
+  } catch (error) {
+    console.error('Greška pri eksportu PDF-a:', error)
+    throw new Error('Došlo je do greške pri generisanju PDF izvještaja')
+  }
+}
+
+// Alternativna PDF export funkcija bez html2canvas problema
+const exportToPDFSimple = async (analyticsData: AnalyticsData) => {
+  try {
+    const { default: jsPDF } = await import('jspdf')
+    
+    const pdf = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    
+    // Header
+    pdf.setFontSize(20)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(40, 40, 40)
+    pdf.text('Analitika Divljači - Kompletan Izvještaj', pageWidth / 2, 20, { align: 'center' })
+
+    pdf.setFontSize(12)
+    pdf.setFont('helvetica', 'normal')
+    pdf.setTextColor(100, 100, 100)
+    pdf.text('Aerodrom Tivat - Wildlife Management Sistem', pageWidth / 2, 28, { align: 'center' })
+
+    const generatedDate = new Date().toLocaleDateString('sr-Latn-ME', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+    pdf.text(`Generisano: ${generatedDate}`, pageWidth / 2, 35, { align: 'center' })
+
+    pdf.setDrawColor(200, 200, 200)
+    pdf.line(10, 40, pageWidth - 10, 40)
+
+    let currentY = 50
+
+    // Metričke kartice
+    pdf.setFontSize(16)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(40, 40, 40)
+    pdf.text('Ključne Metrike', 10, currentY)
+    currentY += 15
+
+    pdf.setFontSize(12)
+    pdf.setFont('helvetica', 'normal')
+    
+    // Metričke vrijednosti sa bojama
+    const metrics = [
+      { label: 'Ukupno viđanja', value: analyticsData.metrics.totalSightings, color: [59, 130, 246] },
+      { label: 'Aktivne opasnosti', value: analyticsData.metrics.activeHazards, color: [239, 68, 68] },
+      { label: 'Identifikovane vrste', value: analyticsData.metrics.uniqueSpecies, color: [16, 185, 129] },
+      { label: 'Prosječno vrijeme odziva', value: analyticsData.metrics.responseTime, color: [139, 92, 246] }
+    ]
+
+    metrics.forEach(metric => {
+      if (currentY > pageHeight - 30) {
+        pdf.addPage()
+        currentY = 20
+      }
+      
+      pdf.setTextColor(metric.color[0], metric.color[1], metric.color[2])
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(`${metric.label}:`, 15, currentY)
+      
+      pdf.setTextColor(40, 40, 40)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text(`${metric.value}`, 70, currentY)
+      
+      currentY += 8
+    })
+
+    currentY += 15
+
+    // Distribucija vrsta
+    pdf.setFontSize(16)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(40, 40, 40)
+    pdf.text('Distribucija Vrsta', 10, currentY)
+    currentY += 10
+
+    pdf.setFontSize(10)
+    pdf.setFont('helvetica', 'normal')
+    
+    analyticsData.speciesData.forEach((species, index) => {
+      if (currentY > pageHeight - 20) {
+        pdf.addPage()
+        currentY = 20
+      }
+      
+      pdf.text(`${species.species}: ${species.count} viđanja (${species.percentage}%)`, 15, currentY)
+      currentY += 6
+    })
+
+    currentY += 10
+
+    // Distribucija ozbiljnosti
+    pdf.setFontSize(16)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text('Distribucija Ozbiljnosti', 10, currentY)
+    currentY += 10
+
+    pdf.setFontSize(10)
+    analyticsData.severityData.forEach(severity => {
+      if (currentY > pageHeight - 20) {
+        pdf.addPage()
+        currentY = 20
+      }
+      
+      pdf.text(`${severity.severity}: ${severity.count} incidenta`, 15, currentY)
+      currentY += 6
+    })
 
     // Footer
     const pageCount = pdf.getNumberOfPages()
@@ -372,11 +534,15 @@ export default function AnalyticsPage() {
   }, [])
 
   const handleExportPDF = async () => {
-    if (!contentRef.current || !analyticsData) return
+    if (!analyticsData) return
     
     setExporting(true)
     try {
-      await exportToPDF(contentRef.current, analyticsData)
+      // Koristite ovu liniju za kompleksniji export sa grafikona
+      // await exportToPDF(contentRef.current!, analyticsData)
+      
+      // Koristite ovu liniju za jednostavniji tekstualni export
+      await exportToPDFSimple(analyticsData)
     } catch (error) {
       console.error('Export failed:', error)
       alert('Došlo je do greške pri eksportu PDF-a. Pokušajte ponovo.')
