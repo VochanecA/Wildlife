@@ -4,16 +4,17 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Providers } from "./providers"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
+import { ClearAuthCookies } from "./clear-auth-cookies"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const geist = Geist({ subsets: ["latin"] })
+const geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Airport Wildlife Management System",
   description: "Professional wildlife hazard management compliant with EASA and ICAO regulations",
   generator: "v0.app",
   manifest: "/manifest.json",
-  themeColor: "#6366f1",
+  // themeColor: "#6366f1",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -28,7 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased`}>
+      <body className={`${geist.className} antialiased`}>
+        {/* This will clear problematic cookies on error */}
+        <ClearAuthCookies />
         <Providers>
           {children}
           <Toaster />

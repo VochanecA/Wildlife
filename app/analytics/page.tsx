@@ -1,6 +1,7 @@
+// app/analytics/page.tsx
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -11,135 +12,321 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Download } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
-import { Bar, BarChart, Line, LineChart, Pie, PieChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Bar, BarChart, Line, LineChart, Pie, PieChart, CartesianGrid, XAxis, YAxis, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
+import { createClient } from "@/lib/supabase/client"
 
-const speciesData = [
-  { species: "Kanadske guske", count: 145, percentage: 32 },
-  { species: "Galebovi", count: 98, percentage: 22 },
-  { species: "Čvorci", count: 87, percentage: 19 },
-  { species: "Jastrebovi", count: 56, percentage: 12 },
-  { species: "Vrane", count: 43, percentage: 10 },
-  { species: "Ostalo", count: 23, percentage: 5 },
-]
+interface AnalyticsData {
+  speciesData: Array<{ species: string; count: number; percentage: number }>
+  severityData: Array<{ severity: string; count: number; fill: string }>
+  monthlyTrends: Array<{ month: string; sightings: number; hazards: number }>
+  timeOfDayData: Array<{ time: string; count: number }>
+  locationData: Array<{ location: string; incidents: number }>
+  metrics: {
+    totalSightings: number
+    activeHazards: number
+    uniqueSpecies: number
+    responseTime: string
+  }
+}
 
-const monthlyTrends = [
-  { month: "Jul", sightings: 45, hazards: 8 },
-  { month: "Avg", sightings: 52, hazards: 12 },
-  { month: "Sep", sightings: 68, hazards: 15 },
-  { month: "Okt", sightings: 89, hazards: 18 },
-  { month: "Nov", sightings: 95, hazards: 22 },
-  { month: "Dec", sightings: 78, hazards: 16 },
-  { month: "Jan", sightings: 72, hazards: 14 },
-]
-
-const severityData = [
-  { severity: "Nisko", count: 125, fill: "hsl(var(--chart-3))" },
-  { severity: "Srednje", count: 178, fill: "hsl(var(--chart-4))" },
-  { severity: "Visoko", count: 89, fill: "hsl(var(--chart-5))" },
-  { severity: "Kritično", count: 32, fill: "hsl(var(--destructive))" },
-]
-
-const timeOfDayData = [
-  { time: "00-04", count: 12 },
-  { time: "04-08", count: 45 },
-  { time: "08-12", count: 89 },
-  { time: "12-16", count: 76 },
-  { time: "16-20", count: 54 },
-  { time: "20-24", count: 23 },
-]
-
-const locationData = [
-  { location: "Pista 27", incidents: 45 },
-  { location: "Taksi staza B", incidents: 32 },
-  { location: "Terminal", incidents: 28 },
-  { location: "Sjeverno polje", incidents: 25 },
-  { location: "Perimetar", incidents: 18 },
-]
+// Custom Tooltip component
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-background border rounded-lg p-3 shadow-lg">
+        <p className="font-medium">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} style={{ color: entry.color }} className="text-sm">
+            {entry.name}: {entry.value}
+          </p>
+        ))}
+      </div>
+    )
+  }
+  return null
+}
 
 export default function AnalyticsPage() {
-  const [dateFrom, setDateFrom] = useState<Date>()
-  const [dateTo, setDateTo] = useState<Date>()
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      try {
+        setLoading(true)
+        const supabase = createClient()
+
+        // Fetch wildlife sightings data
+        const { data: sightings, error: sightingsError } = await supabase
+          .from("wildlife_sightings")
+          .select("*")
+          .order("created_at", { ascending: false })
+
+        // Fetch hazard reports data
+        const { data: hazards, error: hazardsError } = await supabase
+          .from("hazard_reports")
+          .select("*")
+          .order("created_at", { ascending: false })
+
+        if (sightingsError || hazardsError) {
+          throw new Error(sightingsError?.message || hazardsError?.message)
+        }
+
+        // Process data for analytics
+        const processAnalyticsData = (): AnalyticsData | null => {
+          if (!sightings || !hazards) return null
+
+          // Species distribution
+          const speciesCount: { [key: string]: number } = {}
+          sightings.forEach(sighting => {
+            speciesCount[sighting.species] = (speciesCount[sighting.species] || 0) + (sighting.count || 1)
+          })
+          const speciesData = Object.entries(speciesCount)
+            .map(([species, count]) => ({
+              species,
+              count,
+              percentage: Math.round((count / sightings.length) * 100)
+            }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 6)
+
+          // Severity distribution
+          const severityCount: { [key: string]: number } = {}
+          sightings.forEach(sighting => {
+            severityCount[sighting.severity] = (severityCount[sighting.severity] || 0) + 1
+          })
+          const severityData = [
+            { severity: "Nisko", count: severityCount["low"] || 0, fill: "hsl(var(--chart-3))" },
+            { severity: "Srednje", count: severityCount["medium"] || 0, fill: "hsl(var(--chart-4))" },
+            { severity: "Visoko", count: severityCount["high"] || 0, fill: "hsl(var(--chart-5))" },
+            { severity: "Kritično", count: severityCount["critical"] || 0, fill: "hsl(var(--destructive))" },
+          ]
+
+          // Monthly trends
+          const monthlyData: { [key: string]: { sightings: number, hazards: number } } = {}
+          sightings.forEach(sighting => {
+            const month = new Date(sighting.created_at).toLocaleDateString('sr-Latn-ME', { month: 'short' })
+            if (!monthlyData[month]) monthlyData[month] = { sightings: 0, hazards: 0 }
+            monthlyData[month].sightings++
+          })
+          hazards.forEach(hazard => {
+            const month = new Date(hazard.created_at).toLocaleDateString('sr-Latn-ME', { month: 'short' })
+            if (!monthlyData[month]) monthlyData[month] = { sightings: 0, hazards: 0 }
+            monthlyData[month].hazards++
+          })
+          const monthlyTrends = Object.entries(monthlyData)
+            .map(([month, data]) => ({
+              month,
+              sightings: data.sightings,
+              hazards: data.hazards
+            }))
+            .sort((a, b) => {
+              const months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'avg', 'sep', 'okt', 'nov', 'dec']
+              return months.indexOf(a.month.toLowerCase()) - months.indexOf(b.month.toLowerCase())
+            })
+
+          // Time of day analysis
+          const timeOfDayCount: { [key: string]: number } = {
+            "00-04": 0, "04-08": 0, "08-12": 0, 
+            "12-16": 0, "16-20": 0, "20-24": 0
+          }
+          sightings.forEach(sighting => {
+            const hour = new Date(sighting.created_at).getHours()
+            let timeSlot = "20-24"
+            if (hour < 4) timeSlot = "00-04"
+            else if (hour < 8) timeSlot = "04-08"
+            else if (hour < 12) timeSlot = "08-12"
+            else if (hour < 16) timeSlot = "12-16"
+            else if (hour < 20) timeSlot = "16-20"
+            timeOfDayCount[timeSlot]++
+          })
+          const timeOfDayData = Object.entries(timeOfDayCount).map(([time, count]) => ({ time, count }))
+
+          // Location analysis
+          const locationCount: { [key: string]: number } = {}
+          sightings.forEach(sighting => {
+            locationCount[sighting.location] = (locationCount[sighting.location] || 0) + 1
+          })
+          hazards.forEach(hazard => {
+            locationCount[hazard.location] = (locationCount[hazard.location] || 0) + 1
+          })
+          const locationData = Object.entries(locationCount)
+            .map(([location, incidents]) => ({ location, incidents }))
+            .sort((a, b) => b.incidents - a.incidents)
+            .slice(0, 5)
+
+          // Calculate metrics
+          const totalSightings = sightings.length
+          const activeHazards = hazards.filter(h => h.status === 'open' || h.status === 'in_progress').length
+          const uniqueSpecies = new Set(sightings.map(s => s.species)).size
+
+          return {
+            speciesData,
+            severityData,
+            monthlyTrends,
+            timeOfDayData,
+            locationData,
+            metrics: {
+              totalSightings,
+              activeHazards,
+              uniqueSpecies,
+              responseTime: "8.5m"
+            }
+          }
+        }
+
+        const data = processAnalyticsData()
+        setAnalyticsData(data)
+        
+      } catch (err) {
+        console.error("Error fetching analytics data:", err)
+        setError(err instanceof Error ? err.message : "Došlo je do greške pri učitavanju podataka")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAnalyticsData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Analitika Divljači</h1>
+            <p className="text-muted-foreground">Sveobuhvatna analiza podataka o upravljanju divljači</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-lg font-medium">Učitavanje podataka...</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Analitika Divljači</h1>
+            <p className="text-muted-foreground">Sveobuhvatna analiza podataka o upravljanju divljači</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-lg font-medium mb-2 text-destructive">Greška pri učitavanju podataka</p>
+            <p className="text-sm text-muted-foreground">{error}</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!analyticsData) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Analitika Divljači</h1>
+            <p className="text-muted-foreground">Sveobuhvatna analiza podataka o upravljanju divljači</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-lg font-medium mb-2">Nema podataka za analizu</p>
+            <p className="text-sm text-muted-foreground">Unesite podatke o viđanjima i opasnostima da biste vidjeli analitiku</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  const { speciesData, severityData, monthlyTrends, timeOfDayData, locationData, metrics } = analyticsData
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analitika divljih životinja</h1>
-          <p className="text-muted-foreground">Detaljna analiza upravljanja divljim životinjama</p>
+          <h1 className="text-3xl font-bold tracking-tight">Analitika Divljači</h1>
+          <p className="text-muted-foreground">Sveobuhvatna analiza podataka o upravljanju divljači</p>
         </div>
         <Button>
           <Download className="w-4 h-4 mr-2" />
-          Izvezi izvještaj
+          Izvezi Izvještaj
         </Button>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Filteri</CardTitle>
-          <CardDescription>Podesi prikaz analitike</CardDescription>
+          <CardDescription>Prilagodite prikaz analitike</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
             <div className="space-y-2">
-              <Label>Od datuma</Label>
+              <Label>Datum od</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className={cn("w-full justify-start text-left font-normal", !dateFrom && "text-muted-foreground")}
+                    className={cn("w-full justify-start text-left font-normal")}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFrom ? format(dateFrom, "PPP") : <span>Izaberi datum</span>}
+                    <span>Odaberite datum</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus />
+                  <Calendar mode="single" initialFocus />
                 </PopoverContent>
               </Popover>
             </div>
             <div className="space-y-2">
-              <Label>Do datuma</Label>
+              <Label>Datum do</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className={cn("w-full justify-start text-left font-normal", !dateTo && "text-muted-foreground")}
+                    className={cn("w-full justify-start text-left font-normal")}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateTo ? format(dateTo, "PPP") : <span>Izaberi datum</span>}
+                    <span>Odaberite datum</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus />
+                  <Calendar mode="single" initialFocus />
                 </PopoverContent>
               </Popover>
             </div>
             <div className="space-y-2">
               <Label htmlFor="location-filter">Lokacija</Label>
-              <Select>
+              <Select defaultValue="all">
                 <SelectTrigger id="location-filter">
                   <SelectValue placeholder="Sve lokacije" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Sve lokacije</SelectItem>
-                  <SelectItem value="runway">Piste</SelectItem>
-                  <SelectItem value="taxiway">Taksi staze</SelectItem>
+                  <SelectItem value="pista">Piste</SelectItem>
+                  <SelectItem value="rolna">Rolna staza</SelectItem>
                   <SelectItem value="terminal">Terminal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="species-filter">Vrste</Label>
-              <Select>
+              <Label htmlFor="species-filter">Vrsta</Label>
+              <Select defaultValue="all">
                 <SelectTrigger id="species-filter">
                   <SelectValue placeholder="Sve vrste" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Sve vrste</SelectItem>
-                  <SelectItem value="geese">Kanadske guske</SelectItem>
-                  <SelectItem value="gulls">Galebovi</SelectItem>
-                  <SelectItem value="hawks">Jastrebovi</SelectItem>
+                  <SelectItem value="guske">Guske</SelectItem>
+                  <SelectItem value="galebovi">Galebovi</SelectItem>
+                  <SelectItem value="sokolovi">Sokolovi</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -150,55 +337,47 @@ export default function AnalyticsPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">Pregled</TabsTrigger>
-          <TabsTrigger value="species">Analiza vrsta</TabsTrigger>
-          <TabsTrigger value="temporal">Vremenski obrasci</TabsTrigger>
-          <TabsTrigger value="locations">Analiza lokacija</TabsTrigger>
-        </TabsList>
-
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="species">Species Analysis</TabsTrigger>
-          <TabsTrigger value="temporal">Temporal Patterns</TabsTrigger>
-          <TabsTrigger value="locations">Location Analysis</TabsTrigger>
+          <TabsTrigger value="species">Analiza Vrsta</TabsTrigger>
+          <TabsTrigger value="temporal">Vremenski Oblici</TabsTrigger>
+          <TabsTrigger value="locations">Analiza Lokacija</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-6">
           <div className="grid gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Sightings</CardTitle>
+                <CardTitle className="text-sm font-medium">Ukupno Viđanja</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">452</div>
-                <p className="text-xs text-muted-foreground">+12% from last period</p>
+                <div className="text-2xl font-bold">{metrics.totalSightings}</div>
+                <p className="text-xs text-muted-foreground">+12% od prošlog perioda</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Active Hazards</CardTitle>
+                <CardTitle className="text-sm font-medium">Aktivne Opasnosti</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">23</div>
-                <p className="text-xs text-muted-foreground">-8% from last period</p>
+                <div className="text-2xl font-bold">{metrics.activeHazards}</div>
+                <p className="text-xs text-muted-foreground">-8% od prošlog perioda</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Species Identified</CardTitle>
+                <CardTitle className="text-sm font-medium">Identifikovane Vrste</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">34</div>
-                <p className="text-xs text-muted-foreground">+3 new species</p>
+                <div className="text-2xl font-bold">{metrics.uniqueSpecies}</div>
+                <p className="text-xs text-muted-foreground">+3 nove vrste</p>
               </CardContent>
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Response Time</CardTitle>
+                <CardTitle className="text-sm font-medium">Vrijeme Odziva</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">8.5m</div>
-                <p className="text-xs text-muted-foreground">-2.3m improvement</p>
+                <div className="text-2xl font-bold">{metrics.responseTime}</div>
+                <p className="text-xs text-muted-foreground">-2.3m poboljšanje</p>
               </CardContent>
             </Card>
           </div>
@@ -206,58 +385,64 @@ export default function AnalyticsPage() {
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Monthly Trends</CardTitle>
-                <CardDescription>Sightings and hazards over time</CardDescription>
+                <CardTitle>Mjesečni Trendovi</CardTitle>
+                <CardDescription>Viđanja i opasnosti kroz vrijeme</CardDescription>
               </CardHeader>
               <CardContent>
-                <ChartContainer
-                  config={{
-                    sightings: {
-                      label: "Sightings",
-                      color: "hsl(var(--chart-1))",
-                    },
-                    hazards: {
-                      label: "Hazards",
-                      color: "hsl(var(--chart-5))",
-                    },
-                  }}
-                  className="h-[300px]"
-                >
-                  <LineChart data={monthlyTrends}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line type="monotone" dataKey="sightings" stroke="hsl(var(--chart-1))" strokeWidth={2} />
-                    <Line type="monotone" dataKey="hazards" stroke="hsl(var(--chart-5))" strokeWidth={2} />
-                  </LineChart>
-                </ChartContainer>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={monthlyTrends}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="sightings" 
+                        stroke="hsl(var(--chart-1))" 
+                        strokeWidth={2}
+                        name="Viđanja"
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="hazards" 
+                        stroke="hsl(var(--chart-5))" 
+                        strokeWidth={2}
+                        name="Opasnosti"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Severity Distribution</CardTitle>
-                <CardDescription>Incidents by severity level</CardDescription>
+                <CardTitle>Distribucija Ozbiljnosti</CardTitle>
+                <CardDescription>Incidenti po nivou ozbiljnosti</CardDescription>
               </CardHeader>
               <CardContent>
-                <ChartContainer
-                  config={{
-                    count: {
-                      label: "Count",
-                    },
-                  }}
-                  className="h-[300px]"
-                >
-                  <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Pie data={severityData} dataKey="count" nameKey="severity" cx="50%" cy="50%" outerRadius={100}>
-                      {severityData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                  </PieChart>
-                </ChartContainer>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Pie 
+                        data={severityData} 
+                        dataKey="count" 
+                        nameKey="severity" 
+                        cx="50%" 
+                        cy="50%" 
+                        outerRadius={100}
+                        label={({ severity, count }) => `${severity}: ${count}`}
+                      >
+                        {severityData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -266,34 +451,33 @@ export default function AnalyticsPage() {
         <TabsContent value="species" className="space-y-6 mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Species Distribution</CardTitle>
-              <CardDescription>Most frequently observed species</CardDescription>
+              <CardTitle>Distribucija Vrsta</CardTitle>
+              <CardDescription>Najčešće viđene vrste divljači</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer
-                config={{
-                  count: {
-                    label: "Sightings",
-                    color: "hsl(var(--chart-1))",
-                  },
-                }}
-                className="h-[400px]"
-              >
-                <BarChart data={speciesData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="species" />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="count" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ChartContainer>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={speciesData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="species" />
+                    <YAxis />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar 
+                      dataKey="count" 
+                      fill="hsl(var(--chart-1))" 
+                      radius={[4, 4, 0, 0]}
+                      name="Viđanja"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Species Details</CardTitle>
-              <CardDescription>Detailed breakdown by species</CardDescription>
+              <CardTitle>Detalji po Vrstama</CardTitle>
+              <CardDescription>Detaljna analiza po vrstama</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -303,7 +487,7 @@ export default function AnalyticsPage() {
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium">{species.species}</span>
                         <span className="text-sm text-muted-foreground">
-                          {species.count} sightings ({species.percentage}%)
+                          {species.count} viđanja ({species.percentage}%)
                         </span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
@@ -320,47 +504,46 @@ export default function AnalyticsPage() {
         <TabsContent value="temporal" className="space-y-6 mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Time of Day Analysis</CardTitle>
-              <CardDescription>Wildlife activity by time period</CardDescription>
+              <CardTitle>Analiza po Vremenu Dana</CardTitle>
+              <CardDescription>Aktivnost divljači po vremenskom periodu</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer
-                config={{
-                  count: {
-                    label: "Incidents",
-                    color: "hsl(var(--chart-2))",
-                  },
-                }}
-                className="h-[400px]"
-              >
-                <BarChart data={timeOfDayData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="time" />
-                  <YAxis />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="count" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ChartContainer>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={timeOfDayData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="time" />
+                    <YAxis />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar 
+                      dataKey="count" 
+                      fill="hsl(var(--chart-2))" 
+                      radius={[4, 4, 0, 0]}
+                      name="Incidenti"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Peak Activity Hours</CardTitle>
+                <CardTitle>Satovi Najveće Aktivnosti</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <span className="font-medium">Morning Peak</span>
+                    <span className="font-medium">Jutarnji Vrhunac</span>
                     <span className="text-sm text-muted-foreground">08:00 - 12:00</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <span className="font-medium">Afternoon Peak</span>
+                    <span className="font-medium">Popodnevni Vrhunac</span>
                     <span className="text-sm text-muted-foreground">12:00 - 16:00</span>
                   </div>
                   <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                    <span className="font-medium">Low Activity</span>
+                    <span className="font-medium">Niska Aktivnost</span>
                     <span className="text-sm text-muted-foreground">00:00 - 04:00</span>
                   </div>
                 </div>
@@ -369,14 +552,14 @@ export default function AnalyticsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Seasonal Patterns</CardTitle>
+                <CardTitle>Sezonski Oblici</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Spring Migration</span>
-                      <span className="font-medium">High Activity</span>
+                      <span>Proljetna Migracija</span>
+                      <span className="font-medium">Visoka Aktivnost</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-chart-5 h-2 rounded-full" style={{ width: "85%" }} />
@@ -384,8 +567,8 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Summer</span>
-                      <span className="font-medium">Moderate Activity</span>
+                      <span>Ljeto</span>
+                      <span className="font-medium">Umjerena Aktivnost</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-chart-4 h-2 rounded-full" style={{ width: "60%" }} />
@@ -393,8 +576,8 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Fall Migration</span>
-                      <span className="font-medium">Very High Activity</span>
+                      <span>Jesenja Migracija</span>
+                      <span className="font-medium">Veoma Visoka Aktivnost</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-destructive h-2 rounded-full" style={{ width: "95%" }} />
@@ -402,8 +585,8 @@ export default function AnalyticsPage() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>Winter</span>
-                      <span className="font-medium">Low Activity</span>
+                      <span>Zima</span>
+                      <span className="font-medium">Niska Aktivnost</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-chart-3 h-2 rounded-full" style={{ width: "40%" }} />
@@ -418,34 +601,33 @@ export default function AnalyticsPage() {
         <TabsContent value="locations" className="space-y-6 mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Incidents by Location</CardTitle>
-              <CardDescription>High-risk areas requiring attention</CardDescription>
+              <CardTitle>Incidenti po Lokaciji</CardTitle>
+              <CardDescription>Visoko-rizična područja koja zahtijevaju pažnju</CardDescription>
             </CardHeader>
             <CardContent>
-              <ChartContainer
-                config={{
-                  incidents: {
-                    label: "Incidents",
-                    color: "hsl(var(--chart-3))",
-                  },
-                }}
-                className="h-[400px]"
-              >
-                <BarChart data={locationData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="location" type="category" width={120} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="incidents" fill="hsl(var(--chart-3))" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ChartContainer>
+              <div className="h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={locationData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis dataKey="location" type="category" width={120} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar 
+                      dataKey="incidents" 
+                      fill="hsl(var(--chart-3))" 
+                      radius={[0, 4, 4, 0]}
+                      name="Incidenti"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle>Location Risk Assessment</CardTitle>
-              <CardDescription>Priority areas for wildlife management</CardDescription>
+              <CardTitle>Procjena Rizika po Lokaciji</CardTitle>
+              <CardDescription>Prioritetna područja za upravljanje divljači</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -457,12 +639,12 @@ export default function AnalyticsPage() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium">{location.location}</span>
-                        <span className="text-sm text-muted-foreground">{location.incidents} incidents</span>
+                        <span className="text-sm text-muted-foreground">{location.incidents} incidenta</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2">
                         <div
                           className="bg-primary h-2 rounded-full"
-                          style={{ width: `${(location.incidents / 45) * 100}%` }}
+                          style={{ width: `${(location.incidents / Math.max(...locationData.map(l => l.incidents))) * 100}%` }}
                         />
                       </div>
                     </div>

@@ -1,3 +1,4 @@
+// components/new-sighting-dialog.tsx
 "use client"
 
 import type React from "react"
@@ -21,133 +22,205 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
 interface NewSightingDialogProps {
-  children: React.ReactNode
+  children?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function NewSightingDialog({ children }: NewSightingDialogProps) {
+export function NewSightingDialog({ children, open: externalOpen, onOpenChange: externalOnOpenChange }: NewSightingDialogProps) {
   const { toast } = useToast()
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const [species, setSpecies] = useState("")
+  const [count, setCount] = useState("")
+  const [location, setLocation] = useState("")
   const [severity, setSeverity] = useState("")
+  const [notes, setNotes] = useState("")
+  const [latitude, setLatitude] = useState("")
+  const [longitude, setLongitude] = useState("")
+
+  // Use external state if provided, otherwise use internal state
+  const open = externalOpen !== undefined ? externalOpen : internalOpen
+  const setOpen = externalOnOpenChange || setInternalOpen
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    const formData = new FormData(e.currentTarget)
-    const supabase = createClient()
+    try {
+      const supabase = createClient()
 
-    // Get current user
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-    if (!user) {
+      if (userError || !user) {
+        toast({
+          title: "Greška",
+          description: "Morate biti prijavljeni da biste evidentirali zapažanja",
+          variant: "destructive",
+        })
+        setIsSubmitting(false)
+        return
+      }
+
+      // Insert sighting
+      const { error } = await supabase.from("wildlife_sightings").insert({
+        user_id: user.id,
+        species: species,
+        count: Number.parseInt(count),
+        location: location,
+        latitude: latitude ? Number.parseFloat(latitude) : null,
+        longitude: longitude ? Number.parseFloat(longitude) : null,
+        severity: severity,
+        notes: notes,
+      })
+
+      if (error) {
+        console.error("Error inserting sighting:", error)
+        toast({
+          title: "Greška",
+          description: "Došlo je do greške pri evidentiranju zapažanja",
+          variant: "destructive",
+        })
+        setIsSubmitting(false)
+        return
+      }
+
       toast({
-        title: "Error",
-        description: "You must be logged in to record sightings",
+        title: "Zapažanje evidentirano",
+        description: "Zapažanje divljači je uspješno zabeleženo.",
+      })
+
+      // Reset form
+      setSpecies("")
+      setCount("")
+      setLocation("")
+      setSeverity("")
+      setNotes("")
+      setLatitude("")
+      setLongitude("")
+      
+      setIsSubmitting(false)
+      setOpen(false)
+      
+      // Refresh the page to show new data
+      router.refresh()
+
+    } catch (error) {
+      console.error("Unexpected error:", error)
+      toast({
+        title: "Greška",
+        description: "Došlo je do neočekivane greške",
         variant: "destructive",
       })
       setIsSubmitting(false)
-      return
     }
-
-    // Insert sighting
-    const { error } = await supabase.from("wildlife_sightings").insert({
-      user_id: user.id,
-      species: formData.get("species") as string,
-      count: Number.parseInt(formData.get("count") as string),
-      location: formData.get("location") as string,
-      latitude: formData.get("latitude") ? Number.parseFloat(formData.get("latitude") as string) : null,
-      longitude: formData.get("longitude") ? Number.parseFloat(formData.get("longitude") as string) : null,
-      severity: severity,
-      notes: formData.get("notes") as string,
-    })
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      })
-      setIsSubmitting(false)
-      return
-    }
-
-    toast({
-      title: "Sighting recorded",
-      description: "Wildlife sighting has been successfully logged.",
-    })
-
-    setIsSubmitting(false)
-    setOpen(false)
-    router.refresh()
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Record Wildlife Sighting</DialogTitle>
-          <DialogDescription>Enter details of the wildlife observation</DialogDescription>
+          <DialogTitle>Evidentiraj Zapažanje Divljači</DialogTitle>
+          <DialogDescription>Unesite detalje opažanja divljači</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="species">Species *</Label>
-                <Input id="species" name="species" placeholder="e.g., Canada Geese" required />
+                <Label htmlFor="species">Vrsta *</Label>
+                <Input 
+                  id="species" 
+                  placeholder="npr. Kanadske guske" 
+                  value={species}
+                  onChange={(e) => setSpecies(e.target.value)}
+                  required 
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="count">Count *</Label>
-                <Input id="count" name="count" type="number" min="1" placeholder="Number of animals" required />
+                <Label htmlFor="count">Broj *</Label>
+                <Input 
+                  id="count" 
+                  type="number" 
+                  min="1" 
+                  placeholder="Broj životinja" 
+                  value={count}
+                  onChange={(e) => setCount(e.target.value)}
+                  required 
+                />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">Location *</Label>
-              <Input id="location" name="location" placeholder="e.g., Runway 27 - North End" required />
+              <Label htmlFor="location">Lokacija *</Label>
+              <Input 
+                id="location" 
+                placeholder="npr. Pista 27 - Sjeverni kraj" 
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                required 
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="latitude">Latitude</Label>
-                <Input id="latitude" name="latitude" type="number" step="0.000001" placeholder="e.g., 40.6413" />
+                <Label htmlFor="latitude">Geografska širina</Label>
+                <Input 
+                  id="latitude" 
+                  type="number" 
+                  step="0.000001" 
+                  placeholder="npr. 40.6413" 
+                  value={latitude}
+                  onChange={(e) => setLatitude(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="longitude">Longitude</Label>
-                <Input id="longitude" name="longitude" type="number" step="0.000001" placeholder="e.g., -73.7781" />
+                <Label htmlFor="longitude">Geografska dužina</Label>
+                <Input 
+                  id="longitude" 
+                  type="number" 
+                  step="0.000001" 
+                  placeholder="npr. -73.7781" 
+                  value={longitude}
+                  onChange={(e) => setLongitude(e.target.value)}
+                />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="severity">Severity *</Label>
+              <Label htmlFor="severity">Ozbiljnost *</Label>
               <Select value={severity} onValueChange={setSeverity} required>
                 <SelectTrigger id="severity">
-                  <SelectValue placeholder="Select severity" />
+                  <SelectValue placeholder="Odaberite ozbiljnost" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
+                  <SelectItem value="low">Nisko</SelectItem>
+                  <SelectItem value="medium">Srednje</SelectItem>
+                  <SelectItem value="high">Visoko</SelectItem>
+                  <SelectItem value="critical">Kritično</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea id="notes" name="notes" placeholder="Additional observations, actions taken, etc." rows={4} />
+              <Label htmlFor="notes">Napomene</Label>
+              <Textarea 
+                id="notes" 
+                placeholder="Dodatna zapažanja, ponašanje životinja, preduzete akcije, itd." 
+                rows={4} 
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
             </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              Otkaži
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Recording..." : "Record Sighting"}
+              {isSubmitting ? "Evidentiranje..." : "Evidentiraj Zapažanje"}
             </Button>
           </DialogFooter>
         </form>

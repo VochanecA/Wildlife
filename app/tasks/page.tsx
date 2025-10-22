@@ -1,96 +1,114 @@
-"use client"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Filter, CalendarIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { NewTaskDialog } from "@/components/new-task-dialog"
-import { Checkbox } from "@/components/ui/checkbox"
-import type { Task } from "@/lib/types"
+import { TaskStatusDropdown } from "@/components/task-status-dropdown"
+import { Plus, Search, Filter, CalendarIcon, User, MapPin, CheckCircle2 } from "lucide-react"
+import { createClient } from "@/lib/supabase/server"
 
-const mockTasks: Task[] = [
-  {
-    id: "1",
-    title: "Morning runway inspection",
-    description: "Complete visual inspection of all active runways",
-    type: "daily",
-    assignedTo: "John Smith",
-    dueDate: new Date("2025-01-21T08:00:00"),
-    status: "pending",
-    priority: "high",
-    location: "All Runways",
-    createdAt: new Date("2025-01-20T06:00:00"),
-  },
-  {
-    id: "2",
-    title: "Perimeter fence inspection",
-    description: "Check perimeter fence for breaches and wildlife access points",
-    type: "weekly",
-    assignedTo: "Sarah Johnson",
-    dueDate: new Date("2025-01-22T10:00:00"),
-    status: "in_progress",
-    priority: "medium",
-    location: "Perimeter - All Sections",
-    createdAt: new Date("2025-01-15T09:00:00"),
-  },
-  {
-    id: "3",
-    title: "Habitat management - North field",
-    description: "Grass cutting and vegetation management in north field area",
-    type: "monthly",
-    assignedTo: "Mike Chen",
-    dueDate: new Date("2025-01-25T09:00:00"),
-    status: "pending",
-    priority: "medium",
-    location: "North Field",
-    createdAt: new Date("2025-01-01T10:00:00"),
-  },
-  {
-    id: "4",
-    title: "Wildlife hazard assessment report",
-    description: "Compile and submit quarterly wildlife hazard assessment to authorities",
-    type: "yearly",
-    assignedTo: "John Smith",
-    dueDate: new Date("2025-01-31T17:00:00"),
-    status: "pending",
-    priority: "high",
-    createdAt: new Date("2025-01-01T08:00:00"),
-  },
-  {
-    id: "5",
-    title: "Equipment maintenance check",
-    description: "Inspect and maintain wildlife dispersal equipment",
-    type: "weekly",
-    assignedTo: "Mike Chen",
-    dueDate: new Date("2025-01-20T14:00:00"),
-    status: "completed",
-    priority: "low",
-    location: "Equipment Storage",
-    createdAt: new Date("2025-01-13T10:00:00"),
-    completedAt: new Date("2025-01-20T13:45:00"),
-  },
-]
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const supabase = await createClient()
+  const params = await searchParams
+  const searchQuery = typeof params.search === 'string' ? params.search : ''
+  const activeTab = typeof params.tab === 'string' ? params.tab : 'all'
 
-export default function TasksPage() {
-  const [tasks] = useState<Task[]>(mockTasks)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState("all")
+  // Fetch tasks from Supabase
+  const { data: tasks, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .order("due_date", { ascending: true })
 
+  if (error) {
+    console.error("Error fetching tasks:", error)
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Upravljanje Zadacima</h1>
+            <p className="text-muted-foreground">Planirajte i pratite zadatke upravljanja divljači</p>
+          </div>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <p className="text-lg font-medium mb-2 text-destructive">Greška pri učitavanju podataka</p>
+            <p className="text-sm text-muted-foreground">{error.message}</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // If no data, show empty state
+  if (!tasks || tasks.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Upravljanje Zadacima</h1>
+            <p className="text-muted-foreground">Planirajte i pratite zadatke upravljanja divljači</p>
+          </div>
+          <NewTaskDialog>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Novi Zadatak
+            </Button>
+          </NewTaskDialog>
+        </div>
+
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <CheckCircle2 className="w-12 h-12 text-muted-foreground mb-4" />
+            <p className="text-lg font-medium mb-2">Nema zadataka</p>
+            <p className="text-sm text-muted-foreground mb-4">Započnite kreiranjem prvog zadatka</p>
+            <NewTaskDialog>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Kreiraj Prvi Zadatak
+              </Button>
+            </NewTaskDialog>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Fetch user profiles separately to get names
+  const userIds = [...new Set(tasks.map(t => [t.user_id, t.assigned_to]).flat().filter(Boolean))] as string[]
+  let userProfiles: { [key: string]: { full_name: string } } = {}
+
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .in("id", userIds)
+
+    if (profiles) {
+      userProfiles = profiles.reduce((acc, profile) => {
+        acc[profile.id] = { full_name: profile.full_name }
+        return acc
+      }, {} as { [key: string]: { full_name: string } })
+    }
+  }
+
+  // Filter tasks based on search query and active tab
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch =
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchQuery.toLowerCase())
+      task.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.location?.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesTab =
       activeTab === "all" ||
-      (activeTab === "daily" && task.type === "daily") ||
-      (activeTab === "weekly" && task.type === "weekly") ||
-      (activeTab === "monthly" && task.type === "monthly") ||
-      (activeTab === "yearly" && task.type === "yearly")
+      (activeTab === "daily" && task.task_type === "daily") ||
+      (activeTab === "weekly" && task.task_type === "weekly") ||
+      (activeTab === "monthly" && task.task_type === "monthly") ||
+      (activeTab === "yearly" && task.task_type === "yearly")
 
     return matchesSearch && matchesTab
   })
@@ -108,137 +126,163 @@ export default function TasksPage() {
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-muted text-muted-foreground border-border"
-      case "in_progress":
-        return "bg-chart-1/10 text-chart-1 border-chart-1/20"
-      case "completed":
-        return "bg-chart-3/10 text-chart-3 border-chart-3/20"
-      case "overdue":
-        return "bg-destructive/10 text-destructive border-destructive/20"
-      default:
-        return "bg-muted text-muted-foreground border-border"
-    }
-  }
-
-  const handleToggleComplete = (taskId: string) => {
-    console.log("[v0] Toggle task completion:", taskId)
-    // In real implementation, this would update the task status
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Task Management</h1>
-          <p className="text-muted-foreground">Schedule and track wildlife management tasks</p>
+          <h1 className="text-3xl font-bold tracking-tight">Upravljanje Zadacima</h1>
+          <p className="text-muted-foreground">Planirajte i pratite zadatke upravljanja divljači</p>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          New Task
-        </Button>
+        <NewTaskDialog>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Novi Zadatak
+          </Button>
+        </NewTaskDialog>
       </div>
 
       <div className="flex gap-4">
-        <div className="relative flex-1">
+        <form className="relative flex-1" method="GET">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search tasks..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            name="search"
+            placeholder="Pretraži zadatke..."
+            defaultValue={searchQuery}
             className="pl-9"
           />
-        </div>
+          <input type="hidden" name="tab" value={activeTab} />
+        </form>
         <Button variant="outline">
           <Filter className="w-4 h-4 mr-2" />
-          Filters
+          Filteri
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} className="w-full">
         <TabsList>
-          <TabsTrigger value="all">All Tasks</TabsTrigger>
-          <TabsTrigger value="daily">Daily</TabsTrigger>
-          <TabsTrigger value="weekly">Weekly</TabsTrigger>
-          <TabsTrigger value="monthly">Monthly</TabsTrigger>
-          <TabsTrigger value="yearly">Yearly</TabsTrigger>
+          <TabsTrigger value="all" asChild>
+            <a href="?tab=all">Svi Zadaci</a>
+          </TabsTrigger>
+          <TabsTrigger value="daily" asChild>
+            <a href="?tab=daily">Dnevni</a>
+          </TabsTrigger>
+          <TabsTrigger value="weekly" asChild>
+            <a href="?tab=weekly">Nedjeljni</a>
+          </TabsTrigger>
+          <TabsTrigger value="monthly" asChild>
+            <a href="?tab=monthly">Mjesečni</a>
+          </TabsTrigger>
+          <TabsTrigger value="yearly" asChild>
+            <a href="?tab=yearly">Godišnji</a>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">
           <div className="grid gap-4">
-            {filteredTasks.map((task) => (
-              <Card key={task.id}>
-                <CardHeader>
-                  <div className="flex items-start gap-4">
-                    <Checkbox
-                      checked={task.status === "completed"}
-                      onCheckedChange={() => handleToggleComplete(task.id)}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1 flex-1">
-                          <CardTitle
-                            className={task.status === "completed" ? "line-through text-muted-foreground" : ""}
-                          >
+            {filteredTasks.length > 0 ? (
+              filteredTasks.map((task) => (
+                <Card key={task.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <CardTitle className={task.status === "completed" ? "line-through text-muted-foreground" : ""}>
                             {task.title}
                           </CardTitle>
-                          <CardDescription>{task.description}</CardDescription>
                         </div>
-                        <div className="flex gap-2">
-                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
-                          <Badge variant="outline" className={getStatusColor(task.status)}>
-                            {task.status.replace("_", " ")}
-                          </Badge>
-                        </div>
+                        <CardDescription>{task.description}</CardDescription>
+                        {task.location && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <MapPin className="w-3 h-3" />
+                            {task.location}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2 flex-col items-end">
+                        <Badge className={getPriorityColor(task.priority)}>
+                          {task.priority === "high" && "Visok"}
+                          {task.priority === "medium" && "Srednji"}
+                          {task.priority === "low" && "Nizak"}
+                        </Badge>
+                        <TaskStatusDropdown 
+                          taskId={task.id} 
+                          currentStatus={task.status} 
+                        />
                       </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-3 ml-9">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <CalendarIcon className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">Due:</span>
-                        <span className="font-medium">{task.dueDate.toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Type:</span>
-                        <span className="font-medium capitalize">{task.type}</span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Assigned to:</span>
-                        <span className="font-medium">{task.assignedTo}</span>
-                      </div>
-                      {task.location && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Location:</span>
-                          <span className="font-medium">{task.location}</span>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Rok:</span>
+                          <span className="font-medium">
+                            {task.due_date ? new Date(task.due_date).toLocaleDateString() : "Nije postavljen"}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                    {task.completedAt && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Completed:</span>
-                          <span className="font-medium">{task.completedAt.toLocaleString()}</span>
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Tip:</span>
+                          <span className="font-medium capitalize">
+                            {task.task_type === "daily" && "Dnevni"}
+                            {task.task_type === "weekly" && "Nedjeljni"}
+                            {task.task_type === "monthly" && "Mjesečni"}
+                            {task.task_type === "yearly" && "Godišnji"}
+                          </span>
                         </div>
                       </div>
-                    )}
-                  </div>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">Kreirao:</span>
+                          <span className="font-medium">
+                            {userProfiles[task.user_id]?.full_name || "Nepoznato"}
+                          </span>
+                        </div>
+                        {task.assigned_to && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Dodijeljeno:</span>
+                            <span className="font-medium">
+                              {userProfiles[task.assigned_to]?.full_name || "Nepoznato"}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        {task.completed_at && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Završeno:</span>
+                            <span className="font-medium">{new Date(task.completed_at).toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <CheckCircle2 className="w-12 h-12 text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium mb-2">Nema pronađenih zadataka</p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {searchQuery ? "Pokušajte sa drugim pojmovima pretrage" : "Započnite kreiranjem prvog zadatka"}
+                  </p>
+                  <NewTaskDialog>
+                    <Button>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Kreiraj Prvi Zadatak
+                    </Button>
+                  </NewTaskDialog>
                 </CardContent>
               </Card>
-            ))}
+            )}
           </div>
         </TabsContent>
       </Tabs>
-
-      <NewTaskDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
     </div>
   )
 }
