@@ -14,8 +14,6 @@ import { format } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Bar, BarChart, Line, LineChart, Pie, PieChart, CartesianGrid, XAxis, YAxis, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import { createClient } from "@/lib/supabase/client"
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 
 interface AnalyticsData {
   speciesData: Array<{ species: string; count: number; percentage: number; fill: string }>
@@ -31,7 +29,7 @@ interface AnalyticsData {
   }
 }
 
-// Proširena paleta boja za chartove
+// Proširena paleta boja za chartove - KORISTIMO SAMO HEX BOJE
 const CHART_COLORS = {
   primary: "#3b82f6",    // Plava
   secondary: "#8b5cf6",  // Ljubičasta
@@ -42,7 +40,7 @@ const CHART_COLORS = {
   dark: "#64748b",       // Siva
   light: "#94a3b8",      // Svjetlija siva
   
-  // Dodatne boje za više varijacija
+  // Dodatne boje za više varijacija - SAMO HEX
   chart1: "#3b82f6",     // Plava
   chart2: "#8b5cf6",     // Ljubičasta
   chart3: "#10b981",     // Zelena
@@ -59,7 +57,7 @@ const CHART_COLORS = {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-background border rounded-lg p-3 shadow-lg">
+      <div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg">
         <p className="font-medium">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} style={{ color: entry.color }} className="text-sm">
@@ -72,9 +70,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null
 }
 
-// PDF Export funkcija
+// PDF Export funkcija sa popravljenim html2canvas opcijama
 const exportToPDF = async (element: HTMLElement, analyticsData: AnalyticsData) => {
   try {
+    // Dinamički import za izbjegavanje SSR problema
+    const { default: jsPDF } = await import('jspdf')
+    const { default: html2canvas } = await import('html2canvas')
+    
     const pdf = new jsPDF('p', 'mm', 'a4')
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
@@ -131,13 +133,36 @@ const exportToPDF = async (element: HTMLElement, analyticsData: AnalyticsData) =
 
     currentY += 10
 
-    // Capture the main content
+    // Capture the main content sa popravljenim opcijama
     const canvas = await html2canvas(element, {
-      scale: 1.5,
+      scale: 1,
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,
       backgroundColor: '#ffffff',
       logging: false,
+      removeContainer: true,
+      onclone: (clonedDoc) => {
+        // Zamijeni moderne CSS funkcije sa hex bojama
+        const elements = clonedDoc.querySelectorAll('[class*="bg-"], [class*="text-"], [class*="border-"], [class*="from-"], [class*="to-"]')
+        elements.forEach((el: any) => {
+          // Ukloni klase koje koriste oklch
+          el.className = el.className.replace(/\b(bg-|text-|border-|from-|to-)[^\s]*/g, '')
+        })
+        
+        // Dodaj inline stilove sa hex bojama
+        const cards = clonedDoc.querySelectorAll('.bg-gradient-to-br')
+        cards.forEach((card: any, index) => {
+          const colors = [
+            { bg: '#dbeafe', border: '#93c5fd' }, // blue
+            { bg: '#fee2e2', border: '#fca5a5' }, // red
+            { bg: '#dcfce7', border: '#86efac' }, // green
+            { bg: '#f3e8ff', border: '#c4b5fd' }  // purple
+          ]
+          const color = colors[index % colors.length]
+          card.style.background = `linear-gradient(135deg, ${color.bg} 0%, #ffffff 100%)`
+          card.style.borderColor = color.border
+        })
+      }
     })
 
     const imgData = canvas.toDataURL('image/jpeg', 0.8)
@@ -441,7 +466,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Glavni sadržaj za PDF export */}
-      <div ref={contentRef}>
+      <div ref={contentRef} className="print-content">
         <Card>
           <CardHeader>
             <CardTitle>Filteri</CardTitle>
@@ -515,54 +540,54 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Metrics Cards sa ikonama i bojama */}
+        {/* Metrics Cards sa inline stilovima za PDF */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <Card style={{ background: 'linear-gradient(135deg, #dbeafe 0%, #ffffff 100%)', borderColor: '#93c5fd' }}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-blue-600" />
-                Ukupno Viđanja
+                <TrendingUp className="w-4 h-4" style={{ color: '#1d4ed8' }} />
+                <span style={{ color: '#1e40af' }}>Ukupno Viđanja</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-700">{metrics.totalSightings}</div>
-              <p className="text-xs text-blue-600">+12% od prošlog perioda</p>
+              <div className="text-2xl font-bold" style={{ color: '#1d4ed8' }}>{metrics.totalSightings}</div>
+              <p className="text-xs" style={{ color: '#3b82f6' }}>+12% od prošlog perioda</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200">
+          <Card style={{ background: 'linear-gradient(135deg, #fee2e2 0%, #ffffff 100%)', borderColor: '#fca5a5' }}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-600" />
-                Aktivne Opasnosti
+                <AlertTriangle className="w-4 h-4" style={{ color: '#dc2626' }} />
+                <span style={{ color: '#b91c1c' }}>Aktivne Opasnosti</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-700">{metrics.activeHazards}</div>
-              <p className="text-xs text-red-600">-8% od prošlog perioda</p>
+              <div className="text-2xl font-bold" style={{ color: '#dc2626' }}>{metrics.activeHazards}</div>
+              <p className="text-xs" style={{ color: '#ef4444' }}>-8% od prošlog perioda</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <Card style={{ background: 'linear-gradient(135deg, #dcfce7 0%, #ffffff 100%)', borderColor: '#86efac' }}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="w-4 h-4 text-green-600" />
-                Identifikovane Vrste
+                <Users className="w-4 h-4" style={{ color: '#16a34a' }} />
+                <span style={{ color: '#15803d' }}>Identifikovane Vrste</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-700">{metrics.uniqueSpecies}</div>
-              <p className="text-xs text-green-600">+3 nove vrste</p>
+              <div className="text-2xl font-bold" style={{ color: '#16a34a' }}>{metrics.uniqueSpecies}</div>
+              <p className="text-xs" style={{ color: '#22c55e' }}>+3 nove vrste</p>
             </CardContent>
           </Card>
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <Card style={{ background: 'linear-gradient(135deg, #f3e8ff 0%, #ffffff 100%)', borderColor: '#c4b5fd' }}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Clock className="w-4 h-4 text-purple-600" />
-                Vrijeme Odziva
+                <Clock className="w-4 h-4" style={{ color: '#7c3aed' }} />
+                <span style={{ color: '#6d28d9' }}>Vrijeme Odziva</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-purple-700">{metrics.responseTime}</div>
-              <p className="text-xs text-purple-600">-2.3m poboljšanje</p>
+              <div className="text-2xl font-bold" style={{ color: '#7c3aed' }}>{metrics.responseTime}</div>
+              <p className="text-xs" style={{ color: '#8b5cf6' }}>-2.3m poboljšanje</p>
             </CardContent>
           </Card>
         </div>
