@@ -36,13 +36,13 @@ export default function NotFound() {
             Vratite se na pocetnu
           </Link>
           
-          <button
-            onClick={() => window.history.back()}
+          <Link
+            href="javascript:history.back()"
             className="flex items-center justify-center gap-3 w-full border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 px-8 py-4 rounded-xl font-medium transition-all duration-200"
           >
             <ArrowLeft size={20} />
             Idite nazad
-          </button>
+          </Link>
         </div>
 
         {/* Quick Links */}
