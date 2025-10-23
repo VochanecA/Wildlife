@@ -125,28 +125,28 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
 
         {/* Quick Stats Section */}
         <SidebarGroup className="mt-8">
-          <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+          {/* <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
             Brzi Pregled
-          </SidebarGroupLabel>
+          </SidebarGroupLabel> */}
           <SidebarGroupContent>
             <div className="space-y-2">
-              <div className="bg-gradient-to-r from-blue-500/10 to-green-500/10 p-3 rounded-xl border border-blue-200/50">
+              {/* <div className="bg-gradient-to-r from-blue-500/10 to-green-500/10 p-3 rounded-xl border border-blue-200/50">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-gray-700">Aktivni dan</span>
                   <Bird className="w-3 h-3 text-blue-600" />
                 </div>
                 <div className="text-lg font-bold text-gray-900 mt-1">16°C</div>
                 <div className="text-xs text-gray-500">Oblačno, sa povremenom kišom</div>
-              </div>
+              </div> */}
               
-              <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 p-3 rounded-xl border border-orange-200/50">
+              {/* <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 p-3 rounded-xl border border-orange-200/50">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-medium text-gray-700">Rizik od ptica</span>
                   <AlertTriangle className="w-3 h-3 text-orange-600" />
                 </div>
                 <div className="text-lg font-bold text-gray-900 mt-1">Srednji</div>
                 <div className="text-xs text-gray-500">Povećana aktivnost</div>
-              </div>
+              </div> */}
             </div>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -82,10 +82,10 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6 p-4">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-2xl p-6 text-white shadow-lg">
+      <div className="bg-linear-to-r from-blue-600 to-green-600 rounded-2xl p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight mb-2">
+            <h1 className="text-2xl font-bold tracking-tight mb-2">
               Dobrodošao nazad, {profile?.full_name || user?.email} 👋
             </h1>
             <p className="text-blue-100 text-lg">
