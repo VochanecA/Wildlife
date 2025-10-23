@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bird, AlertTriangle, CheckSquare, TrendingUp } from "lucide-react"
+import { Bird, AlertTriangle, CheckSquare, TrendingUp, Brain, User, Calendar, MapPin } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
+import { WildlifeAIChatCard } from "@/components/wildlife-ai-chat-card"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -42,114 +43,206 @@ export default async function DashboardPage() {
     .order("due_date", { ascending: true })
     .limit(3)
 
-const stats = [
-  {
-    title: "Posmatranja Divljih Životinja",
-    value: sightingsCount?.toString() || "0",
-    change: "Ukupno zabilježeno",
-    icon: Bird,
-    color: "text-chart-1",
-  },
-  {
-    title: "Aktivne Opasnosti",
-    value: activeHazardsCount?.toString() || "0",
-    change: "Zahtijeva pažnju",
-    icon: AlertTriangle,
-    color: "text-destructive",
-  },
-  {
-    title: "Neodrađeni Zadaci",
-    value: pendingTasksCount?.toString() || "0",
-    change: "Čeka izvršenje",
-    icon: CheckSquare,
-    color: "text-chart-2",
-  },
-  {
-    title: "Odgovor Sistema",
-    value: "94%",
-    change: "Performanse sistema",
-    icon: TrendingUp,
-    color: "text-chart-3",
-  },
-]
-
+  const stats = [
+    {
+      title: "Posmatranja Divljih Životinja",
+      value: sightingsCount?.toString() || "0",
+      change: "Ukupno zabilježeno",
+      icon: Bird,
+      color: "text-blue-600",
+      bgGradient: "from-blue-500 to-blue-600",
+    },
+    {
+      title: "Aktivne Opasnosti",
+      value: activeHazardsCount?.toString() || "0",
+      change: "Zahtijeva pažnju",
+      icon: AlertTriangle,
+      color: "text-red-600",
+      bgGradient: "from-red-500 to-orange-600",
+    },
+    {
+      title: "Neodrađeni Zadaci",
+      value: pendingTasksCount?.toString() || "0",
+      change: "Čeka izvršenje",
+      icon: CheckSquare,
+      color: "text-green-600",
+      bgGradient: "from-green-500 to-emerald-600",
+    },
+    {
+      title: "AI Asistent",
+      value: "Dostupan",
+      change: "Spreman za pomoć",
+      icon: Brain,
+      color: "text-purple-600",
+      bgGradient: "from-purple-500 to-indigo-600",
+    },
+  ]
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-balance">
-          Dobrodošao nazad, {profile?.full_name || user?.email}
-        </h1>
-        <p className="text-muted-foreground">Evo pregleda aktivnosti upravljanja divljim životinjama</p>
+    <div className="space-y-6 p-4">
+      {/* Welcome Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-2xl p-6 text-white shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">
+              Dobrodošao nazad, {profile?.full_name || user?.email} 👋
+            </h1>
+            <p className="text-blue-100 text-lg">
+              Evo pregleda aktivnosti upravljanja divljim životinjama na Aerodromu Tivat
+            </p>
+          </div>
+          <div className="bg-white/20 p-3 rounded-full">
+            <User className="w-8 h-8" />
+          </div>
+        </div>
       </div>
 
+      {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title}>
+          <Card key={stat.title} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className={`w-4 h-4 ${stat.color}`} />
+              <CardTitle className="text-sm font-medium text-gray-700">{stat.title}</CardTitle>
+              <div className={`p-2 rounded-lg bg-gradient-to-r ${stat.bgGradient}`}>
+                <stat.icon className="w-4 h-4 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.change}</p>
+              <div className={`text-2xl font-bold bg-gradient-to-r ${stat.bgGradient} bg-clip-text text-transparent`}>
+                {stat.value}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Skorašnja Aktivnost</CardTitle>
-            <CardDescription>Najnoviji događaji upravljanja divljim životinjama</CardDescription>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {/* Skorašnja Aktivnost */}
+        <Card className="lg:col-span-1 border-0 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg p-4">
+            <div className="flex items-center space-x-2">
+              <MapPin className="w-5 h-5" />
+              <div>
+                <CardTitle className="text-white">Skorašnja Aktivnost</CardTitle>
+                <CardDescription className="text-blue-100">
+                  Najnoviji događaji upravljanja divljim životinjama
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <div className="space-y-4">
               {recentSightings && recentSightings.length > 0 ? (
                 recentSightings.map((sighting) => (
-                  <div key={sighting.id} className="flex items-start gap-3">
-                    <div className="w-2 h-2 mt-2 rounded-full bg-chart-1" />
+                  <div key={sighting.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="w-3 h-3 mt-1.5 rounded-full bg-gradient-to-r from-blue-500 to-green-500" />
                     <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium">
-                        {sighting.species} spotted at {sighting.location}
+                      <p className="text-sm font-medium text-gray-800">
+                        {sighting.species} zabilježeno na {sighting.location}
                       </p>
-                      <p className="text-xs text-muted-foreground">{new Date(sighting.created_at).toLocaleString()}</p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-500">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                          {sighting.severity}
+                        </span>
+                        <span>{new Date(sighting.created_at).toLocaleString()}</span>
+                      </div>
+                      {sighting.notes && (
+                        <p className="text-xs text-gray-600 mt-1">{sighting.notes}</p>
+                      )}
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">Nema skorašnje aktivnosti</p>
+                <div className="text-center py-8 text-gray-500">
+                  <Bird className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>Nema skorašnje aktivnosti</p>
+                </div>
               )}
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Uskoro Započeti Zadaci</CardTitle>
-            <CardDescription>Zadaci koji će uskoro početi</CardDescription>
+        {/* Uskoro Započeti Zadaci */}
+        <Card className="lg:col-span-1 border-0 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-t-lg p-4">
+            <div className="flex items-center space-x-2">
+              <Calendar className="w-5 h-5" />
+              <div>
+                <CardTitle className="text-white">Uskoro Započeti Zadaci</CardTitle>
+                <CardDescription className="text-green-100">
+                  Zadaci koji će uskoro početi
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4">
             <div className="space-y-4">
               {upcomingTasks && upcomingTasks.length > 0 ? (
                 upcomingTasks.map((task) => (
-                  <div key={task.id} className="flex items-center gap-3">
-                    <CheckSquare className="w-4 h-4 text-muted-foreground" />
+                  <div key={task.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className={`p-2 rounded-lg ${
+                      task.priority === 'high' 
+                        ? 'bg-gradient-to-r from-red-500 to-orange-500' 
+                        : task.priority === 'medium'
+                        ? 'bg-gradient-to-r from-yellow-500 to-amber-500'
+                        : 'bg-gradient-to-r from-blue-500 to-cyan-500'
+                    }`}>
+                      <CheckSquare className="w-4 h-4 text-white" />
+                    </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{task.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {task.due_date ? `Due ${new Date(task.due_date).toLocaleDateString()}` : "No due date"}
+                      <p className="text-sm font-medium text-gray-800">{task.title}</p>
+                      <p className="text-xs text-gray-500">
+                        {task.due_date ? `Rok: ${new Date(task.due_date).toLocaleDateString()}` : "Bez roka"}
                       </p>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          task.priority === 'high' 
+                            ? 'bg-red-100 text-red-700' 
+                            : task.priority === 'medium'
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {task.priority}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">Nema nadolazećih zadataka</p>
+                <div className="text-center py-8 text-gray-500">
+                  <CheckSquare className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>Nema nadolazećih zadataka</p>
+                </div>
               )}
             </div>
           </CardContent>
         </Card>
+
+        {/* AI Asistent Card */}
+        <Card className="lg:col-span-1 border-0 shadow-lg p-0 overflow-hidden">
+          <WildlifeAIChatCard />
+        </Card>
+      </div>
+
+      {/* Quick Actions Footer */}
+      <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-semibold text-gray-800">Brze akcije</h3>
+            <p className="text-sm text-gray-600">Odmah pristupi najvažnijim funkcijama</p>
+          </div>
+          <div className="flex space-x-3">
+            <button className="bg-white border border-gray-300 hover:border-blue-500 text-gray-700 px-4 py-2 rounded-lg transition-all hover:shadow-md flex items-center space-x-2">
+              <Bird className="w-4 h-4" />
+              <span>Novo posmatranje</span>
+            </button>
+            <button className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white px-4 py-2 rounded-lg transition-all hover:shadow-md flex items-center space-x-2">
+              <AlertTriangle className="w-4 h-4" />
+              <span>Prijavi opasnost</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
