@@ -4,10 +4,21 @@ import Link from 'next/link';
 
 const AboutPage = () => {
   return (
-    <div className="min-w-screen bg-gradient-to-br from-indigo-600 via-blue-600 to-sky-500 text-gray-800">
+    <div className="min-w-screen bg-white text-gray-800">
       {/* Hero Section */}
-      <section className="relative flex flex-col justify-center items-center text-center text-white py-24 px-6 sm:px-10 lg:py-32">
-        <div className="max-w-6xl w-full">
+      <section
+        className="relative flex flex-col justify-center items-center text-center text-white py-28 px-6 sm:px-10 lg:py-36 bg-cover bg-center"
+        style={{
+          backgroundImage:
+            "url('/aerodrom-tivat.jpg')",
+        }}
+      >
+        {/* Overlay sloj */}
+        <div className="absolute inset-0 bg-blue/10 backdrop-blur-sm"></div>
+        {/* Gradient sloj */}
+        <div className="absolute inset-0 bg-linear-to-b from-blue/20 via-transparent to-blue/10"></div>
+
+        <div className="relative z-10 max-w-6xl w-full">
           <div className="text-7xl sm:text-8xl mb-4">🦅</div>
           <h1 className="text-4xl sm:text-6xl font-extrabold mb-4 drop-shadow-lg">
             Airport Wildlife Management System
@@ -26,11 +37,10 @@ const AboutPage = () => {
             ))}
           </div>
         </div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.12),transparent_70%)]" />
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-6 sm:px-10 bg-white rounded-t-[3rem] -mt-10 shadow-inner">
+      <section className="py-20 px-6 sm:px-10 bg-white rounded-t-[3rem] -mt-12 shadow-inner">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-800 mb-4 text-center">
             Glavne Karakteristike
