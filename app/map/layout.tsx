@@ -28,7 +28,7 @@ export default async function OfflineLayout({
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4">
           <SidebarTrigger />
           <div className="flex-1">
-            <h1 className="text-lg font-semibold">Offline Mode</h1>
+            <h1 className="text-lg font-semibold">Pregled mape-karte</h1>
           </div>
         </header>
         <main className="flex-1 p-6">{children}</main>
