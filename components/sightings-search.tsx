@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Search, Filter } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 
-export function SightingsSearch() {
+function SightingsSearchContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "")
@@ -38,5 +38,27 @@ export function SightingsSearch() {
         Search
       </Button>
     </div>
+  )
+}
+
+export function SightingsSearch() {
+  return (
+    <Suspense fallback={
+      <div className="flex gap-4">
+        <div className="relative flex-1">
+          <Input
+            placeholder="Search by species or location..."
+            disabled
+            className="pl-9"
+          />
+        </div>
+        <Button variant="outline" disabled>
+          <Filter className="w-4 h-4 mr-2" />
+          Search
+        </Button>
+      </div>
+    }>
+      <SightingsSearchContent />
+    </Suspense>
   )
 }

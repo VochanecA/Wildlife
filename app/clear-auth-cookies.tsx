@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 
-export function ClearAuthCookies() {
+function ClearAuthCookiesContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -28,4 +28,12 @@ export function ClearAuthCookies() {
   }, [pathname, searchParams])
 
   return null
+}
+
+export function ClearAuthCookies() {
+  return (
+    <div style={{ display: 'none' }}>
+      <ClearAuthCookiesContent />
+    </div>
+  )
 }

@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
+import { Suspense } from "react"
 import { Providers } from "./providers"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
@@ -31,7 +32,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geist.className} antialiased`}>
         {/* This will clear problematic cookies on error */}
-        <ClearAuthCookies />
+        <Suspense fallback={null}>
+          <ClearAuthCookies />
+        </Suspense>
         <Providers>
           {children}
           <Toaster />
