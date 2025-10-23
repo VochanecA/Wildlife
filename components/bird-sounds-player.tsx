@@ -27,7 +27,7 @@ const birdSounds: BirdSound[] = [
     duration: '20 sekundi',
     frequency: '2-8 kHz',
     effectiveness: 'Visoka (85%)',
-    image: '/images/wildlife/seagull.jpg',
+    image: '/wildlife/seagull.jpg',
     audioUrl: '/sounds/seagull-repellent.mp3' // Zamijeni sa pravim URL-om
   },
   {
@@ -38,7 +38,7 @@ const birdSounds: BirdSound[] = [
     duration: '22 sekunde',
     frequency: '5-12 kHz',
     effectiveness: 'Srednja (70%)',
-    image: '/images/wildlife/swallow.jpg',
+    image: '/wildlife/swallow.jpg',
     audioUrl: '/sounds/swallow-repellent.mp3'
   },
   {
@@ -49,7 +49,7 @@ const birdSounds: BirdSound[] = [
     duration: '18 sekundi',
     frequency: '8-15 kHz',
     effectiveness: 'Srednja (65%)',
-    image: '/images/wildlife/falcon.jpg',
+    image: '/wildlife/falcon.jpg',
     audioUrl: '/sounds/falcon-repellent.mp3'
   },
   {
@@ -60,7 +60,7 @@ const birdSounds: BirdSound[] = [
     duration: '25 sekundi',
     frequency: '3-10 kHz',
     effectiveness: 'Visoka (80%)',
-    image: '/images/wildlife/pigeon.jpg',
+    image: '/wildlife/pigeon.jpg',
 
     audioUrl: '/sounds/pigeon-repellent.mp3'
   },
@@ -72,7 +72,7 @@ const birdSounds: BirdSound[] = [
     duration: '20 sekundi',
     frequency: '4-9 kHz',
     effectiveness: 'Srednja (60%)',
-    image: '/images/wildlife/corvux.jpg',
+    image: '/wildlife/corvux.jpg',
     audioUrl: '/sounds/crow-repellent.mp3'
   },
   {
@@ -83,7 +83,7 @@ const birdSounds: BirdSound[] = [
     duration: '15 sekundi',
     frequency: '6-14 kHz',
     effectiveness: 'Visoka (90%)',
-    image: '/api/placeholder/300/200?text=Vrabac',
+    image: '/wildlife/sparow.jpg',
     audioUrl: '/sounds/sparrow-repellent.mp3'
   }
 ]
