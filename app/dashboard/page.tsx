@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Bird, AlertTriangle, CheckSquare, TrendingUp, Brain, User, Calendar, MapPin } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { WildlifeAIChatCard } from "@/components/wildlife-ai-chat-card"
+import { DailyAnalysisCard } from "@/components/daily-analysis-card"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -224,7 +225,7 @@ export default async function DashboardPage() {
           <WildlifeAIChatCard />
         </Card>
       </div>
-
+<DailyAnalysisCard />
       {/* Quick Actions Footer */}
       <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
         <div className="flex items-center justify-between">
