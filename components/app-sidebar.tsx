@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 import {
   Home,
+  Volume2,
   Bird,
   AlertTriangle,
   CheckSquare,
@@ -38,6 +39,7 @@ const menuItems = [
   { title: "Posmatranja Divljih Životinja", icon: Bird, url: "/sightings" },
   { title: "Izvještaji o Opasnostima", icon: AlertTriangle, url: "/hazards" },
   { title: "Zadaci", icon: CheckSquare, url: "/tasks" },
+  { title: "Repelent Zvukovi", icon: Volume2, url: "/bird-sounds" }, // DODAJ OVO
   { title: "Planiranje Aktivnosti", icon: Calendar, url: "/planning" },
   { title: "Poruke", icon: MessageSquare, url: "/messages" },
   { title: "Analitika", icon: BarChart3, url: "/analytics" },

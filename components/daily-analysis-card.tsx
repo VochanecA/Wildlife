@@ -1,9 +1,9 @@
 // components/daily-analysis-card.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Brain, Calendar, TrendingUp, AlertTriangle, RefreshCw } from "lucide-react";
+import { Brain, Calendar, TrendingUp, AlertTriangle, RefreshCw, Play } from "lucide-react";
 import { Button } from '@/components/ui/button';
 
 interface DailyAnalysis {
@@ -36,10 +36,6 @@ export function DailyAnalysisCard() {
     }
   };
 
-  useEffect(() => {
-    fetchDailyAnalysis();
-  }, []);
-
   const formatAnalysisText = (text: string) => {
     return text.split('\n').map((line, index) => {
       if (line.startsWith('**') && line.endsWith('**')) {
@@ -67,7 +63,7 @@ export function DailyAnalysisCard() {
             <div>
               <CardTitle className="text-white">Dnevna AI Analiza</CardTitle>
               <CardDescription className="text-purple-100">
-                Automatski pregled podataka i trendova
+                Pregled podataka i trendova na zahtjev
               </CardDescription>
             </div>
           </div>
@@ -79,7 +75,7 @@ export function DailyAnalysisCard() {
             className="text-white hover:bg-white/20"
           >
             <RefreshCw className={`w-4 h-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-            Osvježi
+            {analysis ? 'Osvježi' : 'Pokreni analizu'}
           </Button>
         </div>
       </CardHeader>
@@ -89,6 +85,7 @@ export function DailyAnalysisCard() {
             <div className="text-center">
               <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-2" />
               <p className="text-gray-500">AI analizira podatke...</p>
+              <p className="text-xs text-gray-400 mt-1">Ovo može potrajati nekoliko sekundi</p>
             </div>
           </div>
         ) : error ? (
@@ -125,7 +122,27 @@ export function DailyAnalysisCard() {
               Analiza obuhvata podatke za poslednjih 2, 3, 7 dana, 1, 3, 6 mjeseci i godinu dana
             </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Play className="w-8 h-8 text-purple-600" />
+            </div>
+            <h3 className="font-semibold text-gray-700 mb-2">Spreman za analizu</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Kliknite na "Pokreni analizu" da AI pregleda podatke i generiše izvještaj
+            </p>
+            <Button
+              onClick={fetchDailyAnalysis}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+            >
+              <Brain className="w-4 h-4 mr-2" />
+              Pokreni AI analizu
+            </Button>
+            <div className="mt-4 text-xs text-gray-500">
+              Analiza će obuhvatiti podatke za različite vremenske periode
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
