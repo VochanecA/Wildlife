@@ -3,6 +3,7 @@ import type React from "react"
 import { createClient } from "@/lib/supabase/server"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { ScrollToTopOnRouteChange } from "@/components/scroll-to-top"
 
 export default async function DashboardLayout({
   children,
@@ -18,22 +19,28 @@ export default async function DashboardLayout({
     redirect("/auth/login")
   }
 
-  // Fetch user profile
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single()
 
   return (
     <>
       <AppSidebar user={user} profile={profile} />
       <SidebarInset>
-
         <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4">
           <SidebarTrigger />
-                   <div className="flex-1">
+          <div className="flex-1">
             <h1 className="text-lg font-bold text-blue-600">Kontrolna tabla</h1>
           </div>
         </header>
+
         <main className="flex-1 p-6">{children}</main>
       </SidebarInset>
+
+      {/* ✅ Radi samo na klijentu — bez greške na serveru */}
+      <ScrollToTopOnRouteChange />
     </>
   )
 }

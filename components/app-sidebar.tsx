@@ -33,13 +33,14 @@ import {
 import { useRouter, usePathname } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { cn } from "@/lib/utils"
+import Link from "next/link" // DODAJTE OVO
 
 const menuItems = [
   { title: "Kontrolna Tabla", icon: Home, url: "/dashboard" },
   { title: "Posmatranja Divljih Životinja", icon: Bird, url: "/sightings" },
   { title: "Izvještaji o Opasnostima", icon: AlertTriangle, url: "/hazards" },
   { title: "Zadaci", icon: CheckSquare, url: "/tasks" },
-  { title: "Repelent Zvukovi", icon: Volume2, url: "/bird-sounds" }, // DODAJ OVO
+  { title: "Repelent Zvukovi", icon: Volume2, url: "/bird-sounds" },
   { title: "Planiranje Aktivnosti", icon: Calendar, url: "/planning" },
   { title: "Poruke", icon: MessageSquare, url: "/messages" },
   { title: "Analitika", icon: BarChart3, url: "/analytics" },
@@ -105,7 +106,11 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild className={getButtonStyle(item.url)}>
-                    <a href={item.url} className="flex items-center gap-3 p-3 rounded-xl">
+                    <Link 
+                      href={item.url} 
+                      className="flex items-center gap-3 p-3 rounded-xl"
+                      scroll={false} // OVO SPRJEČAVA AUTOMATSKO SKROLANJE
+                    >
                       <div className={cn(
                         "p-2 rounded-lg transition-all duration-200",
                         pathname === item.url 
@@ -115,7 +120,7 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
                         <item.icon className={cn("w-4 h-4", getIconColor(item.url))} />
                       </div>
                       <span className="font-medium text-sm">{item.title}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -125,28 +130,9 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
 
         {/* Quick Stats Section */}
         <SidebarGroup className="mt-8">
-          {/* <SidebarGroupLabel className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-            Brzi Pregled
-          </SidebarGroupLabel> */}
           <SidebarGroupContent>
             <div className="space-y-2">
-              {/* <div className="bg-gradient-to-r from-blue-500/10 to-green-500/10 p-3 rounded-xl border border-blue-200/50">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-700">Aktivni dan</span>
-                  <Bird className="w-3 h-3 text-blue-600" />
-                </div>
-                <div className="text-lg font-bold text-gray-900 mt-1">16°C</div>
-                <div className="text-xs text-gray-500">Oblačno, sa povremenom kišom</div>
-              </div> */}
-              
-              {/* <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 p-3 rounded-xl border border-orange-200/50">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-700">Rizik od ptica</span>
-                  <AlertTriangle className="w-3 h-3 text-orange-600" />
-                </div>
-                <div className="text-lg font-bold text-gray-900 mt-1">Srednji</div>
-                <div className="text-xs text-gray-500">Povećana aktivnost</div>
-              </div> */}
+              {/* Quick stats content */}
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
