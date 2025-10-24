@@ -162,3 +162,32 @@ CREATE TABLE public.risk_predictions (
   CONSTRAINT risk_predictions_pkey PRIMARY KEY (id),
   CONSTRAINT risk_predictions_model_id_fkey FOREIGN KEY (model_id) REFERENCES public.prediction_models(id)
 );
+
+dodato za opremu:
+
+CREATE TABLE public.equipment (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  type text NOT NULL CHECK (type = ANY (ARRAY['repellent', 'camera', 'trap', 'sensor', 'vehicle', 'other'])),
+  status text NOT NULL DEFAULT 'available' CHECK (status = ANY (ARRAY['available', 'in_use', 'maintenance', 'retired'])),
+  location text,
+  last_maintenance date,
+  next_maintenance date,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT equipment_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.equipment_usage (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  equipment_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  task_id uuid,
+  start_time timestamp with time zone NOT NULL,
+  end_time timestamp with time zone,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT equipment_usage_pkey PRIMARY KEY (id),
+  CONSTRAINT equipment_usage_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipment(id),
+  CONSTRAINT equipment_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);

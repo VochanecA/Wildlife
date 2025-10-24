@@ -7,7 +7,11 @@ import { NewHazardDialog } from "@/components/new-hazard-dialog"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { NewSightingDialog } from "@/components/new-sighting-dialog"
-import Link from "next/link" // Dodajte ovaj import
+import Link from "next/link"
+import { WeatherCard } from "@/components/weather-card"
+import { ExtendedForecast } from "@/components/extended-forecast"
+import { getWeatherData, getExtendedForecast } from "@/lib/weather"
+
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -49,6 +53,10 @@ export default async function DashboardPage() {
     .order("due_date", { ascending: true })
     .limit(3)
 
+  // Fetch weather data na serveru
+  const weatherData = await getWeatherData()
+  const forecastData = await getExtendedForecast()
+
   const stats = [
     {
       title: "Posmatranja Divljih Životinja",
@@ -57,7 +65,7 @@ export default async function DashboardPage() {
       icon: Bird,
       color: "text-blue-600",
       bgGradient: "from-blue-500 to-blue-600",
-      href: "/sightings" // Dodajte href
+      href: "/sightings"
     },
     {
       title: "Aktivne Opasnosti",
@@ -66,7 +74,7 @@ export default async function DashboardPage() {
       icon: AlertTriangle,
       color: "text-red-600",
       bgGradient: "from-red-500 to-orange-600",
-      href: "/hazards" // Dodajte href
+      href: "/hazards"
     },
     {
       title: "Neodrađeni Zadaci",
@@ -75,7 +83,7 @@ export default async function DashboardPage() {
       icon: CheckSquare,
       color: "text-green-600",
       bgGradient: "from-green-500 to-emerald-600",
-      href: "/tasks" // Dodajte href
+      href: "/tasks"
     },
     {
       title: "AI Asistent",
@@ -84,14 +92,14 @@ export default async function DashboardPage() {
       icon: Brain,
       color: "text-purple-600",
       bgGradient: "from-purple-500 to-indigo-600",
-      href: "#" // AI Asistent ostaje na istoj stranici
+      href: "#"
     },
   ]
 
   return (
     <div className="space-y-6 p-4">
       {/* Welcome Header */}
-      <div className="bg-linear-to-r from-blue-600 to-green-600 rounded-2xl p-6 text-white shadow-lg">
+      <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-2xl p-6 text-white shadow-lg">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight mb-2">
@@ -101,21 +109,28 @@ export default async function DashboardPage() {
               Evo pregleda aktivnosti upravljanja divljim životinjama na Aerodromu Tivat
             </p>
           </div>
-          <div className="bg-white/20 p-3 rounded-full">
-            <User className="w-8 h-8" />
+          <div className="flex items-center space-x-3">
+        
+            <div className="bg-white/20 p-3 rounded-full">
+              <User className="w-8 h-8" />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Stats Grid sa Weather */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="lg:col-span-1">
+          <WeatherCard initialData={weatherData} />
+        </div>
+        
         {stats.map((stat) => (
           <Link 
             key={stat.title} 
             href={stat.href}
-            className="block" // Ovo osigurava da Link zauzima cijeli prostor
+            className="block"
           >
-            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group">
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group h-full">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-gray-700">{stat.title}</CardTitle>
                 <div className={`p-2 rounded-lg bg-gradient-to-r ${stat.bgGradient} group-hover:scale-110 transition-transform`}>
@@ -135,7 +150,7 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Skorašnja Aktivnost */}
-        <Card className="lg:col-span-1 border-0 shadow-lg">
+        <Card className="border-0 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg p-4">
             <div className="flex items-center space-x-2">
               <MapPin className="w-5 h-5" />
@@ -176,7 +191,6 @@ export default async function DashboardPage() {
                 </div>
               )}
             </div>
-            {/* Dodajte link za više zapažanja */}
             <div className="mt-4 pt-4 border-t border-gray-200">
               <Link 
                 href="/sightings" 
@@ -189,7 +203,7 @@ export default async function DashboardPage() {
         </Card>
 
         {/* Uskoro Započeti Zadaci */}
-        <Card className="lg:col-span-1 border-0 shadow-lg">
+        <Card className="border-0 shadow-lg">
           <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-t-lg p-4">
             <div className="flex items-center space-x-2">
               <Calendar className="w-5 h-5" />
@@ -241,7 +255,6 @@ export default async function DashboardPage() {
                 </div>
               )}
             </div>
-            {/* Dodajte link za više zadataka */}
             <div className="mt-4 pt-4 border-t border-gray-200">
               <Link 
                 href="/tasks" 
@@ -254,12 +267,16 @@ export default async function DashboardPage() {
         </Card>
 
         {/* AI Asistent Card */}
-        <Card className="lg:col-span-1 border-0 shadow-lg p-0 overflow-hidden">
+        <Card className="border-0 shadow-lg p-0 overflow-hidden">
           <WildlifeAIChatCard />
         </Card>
       </div>
 
-      <DailyAnalysisCard />
+      {/* Daily Analysis i Extended Forecast */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <DailyAnalysisCard />
+        <ExtendedForecast initialData={forecastData} />
+      </div>
 
       {/* Quick Actions Footer */}
       <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6 border border-gray-200">

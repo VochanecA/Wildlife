@@ -13,6 +13,7 @@ import {
   BarChart3,
   Map,
   LogOut,
+ 
   WifiOff,
   Plane,
   Brain,
@@ -48,6 +49,7 @@ const menuItems = [
   { title: "Analitika", icon: BarChart3, url: "/analytics" },
   { title: "Predikcije Rizika", icon: Brain, url: "/predictions" },
   { title: "Izvještaji", icon: FileText, url: "/reports" },
+  { title: "Oprema", icon: Settings, url: "/equipment" },
   { title: "Pregled Karte", icon: Map, url: "/map" },
   { title: "Offline Režim", icon: WifiOff, url: "/offline" },
 ]
