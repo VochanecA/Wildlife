@@ -15,6 +15,8 @@ import {
   LogOut,
   WifiOff,
   Plane,
+  Brain,
+  FileText,
   User as UserIcon,
   Settings,
 } from "lucide-react"
@@ -44,6 +46,8 @@ const menuItems = [
   { title: "Planiranje Aktivnosti", icon: Calendar, url: "/planning" },
   { title: "Poruke", icon: MessageSquare, url: "/messages" },
   { title: "Analitika", icon: BarChart3, url: "/analytics" },
+  { title: "Predikcije Rizika", icon: Brain, url: "/predictions" },
+  { title: "Izvještaji", icon: FileText, url: "/reports" },
   { title: "Pregled Karte", icon: Map, url: "/map" },
   { title: "Offline Režim", icon: WifiOff, url: "/offline" },
 ]

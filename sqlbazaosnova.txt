@@ -1,0 +1,164 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.activity_plan_items (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  plan_id uuid NOT NULL,
+  activity text NOT NULL,
+  assigned_to uuid,
+  duration text,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT activity_plan_items_pkey PRIMARY KEY (id),
+  CONSTRAINT activity_plan_items_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES public.activity_plans(id),
+  CONSTRAINT activity_plan_items_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES auth.users(id)
+);
+CREATE TABLE public.activity_plans (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  description text,
+  season text NOT NULL CHECK (season = ANY (ARRAY['summer'::text, 'winter'::text])),
+  season_year integer NOT NULL,
+  start_date date NOT NULL,
+  end_date date NOT NULL,
+  status text NOT NULL DEFAULT 'draft'::text CHECK (status = ANY (ARRAY['draft'::text, 'active'::text, 'completed'::text])),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT activity_plans_pkey PRIMARY KEY (id),
+  CONSTRAINT activity_plans_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.hazard_reports (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  description text NOT NULL,
+  location text NOT NULL,
+  latitude numeric,
+  longitude numeric,
+  severity text NOT NULL CHECK (severity = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'critical'::text])),
+  status text NOT NULL DEFAULT 'open'::text CHECK (status = ANY (ARRAY['open'::text, 'in_progress'::text, 'resolved'::text, 'closed'::text])),
+  priority text NOT NULL CHECK (priority = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'urgent'::text])),
+  assigned_to uuid,
+  resolved_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT hazard_reports_pkey PRIMARY KEY (id),
+  CONSTRAINT hazard_reports_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT hazard_reports_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES auth.users(id)
+);
+CREATE TABLE public.messages (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  sender_id uuid NOT NULL,
+  recipient_id uuid NOT NULL,
+  subject text NOT NULL,
+  body text NOT NULL,
+  priority text NOT NULL DEFAULT 'normal'::text CHECK (priority = ANY (ARRAY['low'::text, 'normal'::text, 'high'::text, 'urgent'::text])),
+  is_read boolean DEFAULT false,
+  read_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT messages_pkey PRIMARY KEY (id),
+  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES auth.users(id),
+  CONSTRAINT messages_recipient_id_fkey FOREIGN KEY (recipient_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.profiles (
+  id uuid NOT NULL,
+  email text NOT NULL,
+  full_name text,
+  role text NOT NULL DEFAULT 'officer'::text CHECK (role = ANY (ARRAY['officer'::text, 'supervisor'::text, 'admin'::text])),
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT profiles_pkey PRIMARY KEY (id),
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.tasks (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  description text,
+  task_type text NOT NULL CHECK (task_type = ANY (ARRAY['daily'::text, 'weekly'::text, 'monthly'::text, 'yearly'::text])),
+  priority text NOT NULL CHECK (priority = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text])),
+  status text NOT NULL DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'in_progress'::text, 'completed'::text])),
+  assigned_to uuid,
+  due_date date,
+  completed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT tasks_pkey PRIMARY KEY (id),
+  CONSTRAINT tasks_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT tasks_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES auth.users(id)
+);
+CREATE TABLE public.wildlife_sightings (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  species text NOT NULL,
+  count integer NOT NULL DEFAULT 1,
+  location text NOT NULL,
+  latitude numeric,
+  longitude numeric,
+  severity text NOT NULL CHECK (severity = ANY (ARRAY['low'::text, 'medium'::text, 'high'::text, 'critical'::text])),
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT wildlife_sightings_pkey PRIMARY KEY (id),
+  CONSTRAINT wildlife_sightings_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+
+
+dodat za media upload:
+CREATE TABLE public.media_attachments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  entity_type text NOT NULL CHECK (entity_type = ANY (ARRAY['sighting', 'hazard'])),
+  entity_id uuid NOT NULL,
+  file_name text NOT NULL,
+  file_type text NOT NULL,
+  file_size integer,
+  file_url text NOT NULL,
+  thumbnail_url text,
+  description text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT media_attachments_pkey PRIMARY KEY (id),
+  CONSTRAINT media_attachments_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+
+dodato za reporting:
+CREATE TABLE public.reports (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  title text NOT NULL,
+  report_type text NOT NULL CHECK (report_type = ANY (ARRAY['daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'custom'])),
+  period_start date NOT NULL,
+  period_end date NOT NULL,
+  data jsonb NOT NULL,
+  generated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT reports_pkey PRIMARY KEY (id),
+  CONSTRAINT reports_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+
+dodato za prediction i analysis:
+CREATE TABLE public.prediction_models (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  model_type text NOT NULL,
+  accuracy numeric,
+  parameters jsonb,
+  is_active boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT prediction_models_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.risk_predictions (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  model_id uuid NOT NULL,
+  location text NOT NULL,
+  latitude numeric NOT NULL,
+  longitude numeric NOT NULL,
+  risk_level text NOT NULL CHECK (risk_level = ANY (ARRAY['low', 'medium', 'high', 'critical'])),
+  confidence numeric NOT NULL,
+  predicted_date date NOT NULL,
+  species text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT risk_predictions_pkey PRIMARY KEY (id),
+  CONSTRAINT risk_predictions_model_id_fkey FOREIGN KEY (model_id) REFERENCES public.prediction_models(id)
+);

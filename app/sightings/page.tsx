@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Users, Calendar, MapPin } from "lucide-react"
+import { Plus, Users, Calendar, MapPin, Image, Video, File } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { NewSightingDialog } from "@/components/new-sighting-dialog"
 import { SightingStatusDropdown } from "@/components/sighting-status-dropdown"
@@ -56,6 +56,21 @@ export default async function SightingsPage({ searchParams }: SightingsPageProps
   const { data: allSightings } = await supabase
     .from("wildlife_sightings")
     .select("*")
+
+  // Dohvati media attachments za sva zapažanja
+  const sightingIds = sightings?.map(s => s.id) || []
+  let mediaAttachments: any[] = []
+
+  if (sightingIds.length > 0) {
+    const { data: media } = await supabase
+      .from("media_attachments")
+      .select("*")
+      .eq("entity_type", "sighting")
+      .in("entity_id", sightingIds)
+      .order("created_at", { ascending: false })
+
+    mediaAttachments = media || []
+  }
 
   if (error) {
     console.error("Error fetching sightings:", error)
@@ -159,65 +174,140 @@ export default async function SightingsPage({ searchParams }: SightingsPageProps
       <StatisticsCard statistics={statistics} totalSightings={allSightings?.length || 0} />
 
       <div className="grid gap-4">
-        {sightings.map((sighting) => (
-          <Card key={sighting.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-xl">{sighting.species}</CardTitle>
-                    <Badge variant="outline">{sighting.severity}</Badge>
+        {sightings.map((sighting) => {
+          const sightingMedia = mediaAttachments.filter(media => media.entity_id === sighting.id)
+          
+          return (
+            <Card key={sighting.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-xl">{sighting.species}</CardTitle>
+                      <Badge variant="outline">{sighting.severity}</Badge>
+                      {sightingMedia.length > 0 && (
+                        <Badge variant="secondary" className="flex items-center gap-1">
+                          <Image className="w-3 h-3" />
+                          {sightingMedia.length}
+                        </Badge>
+                      )}
+                    </div>
+                    <CardDescription>{sighting.location}</CardDescription>
                   </div>
-                  <CardDescription>{sighting.location}</CardDescription>
+                  <SightingStatusDropdown 
+                    sightingId={sighting.id} 
+                    currentSeverity={sighting.severity} 
+                  />
                 </div>
-                <SightingStatusDropdown 
-                  sightingId={sighting.id} 
-                  currentSeverity={sighting.severity} 
-                />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Broj:</span>
-                    <span className="font-medium">{sighting.count} jedinki</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Prijavio:</span>
-                    <span className="font-medium">
-                      {userProfiles[sighting.user_id]?.full_name || "Nepoznato"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-muted-foreground">Vrijeme:</span>
-                    <span className="font-medium">{new Date(sighting.created_at).toLocaleString()}</span>
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  {sighting.latitude && sighting.longitude && (
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-3">
                     <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Koordinate:</span>
-                      <span className="font-medium font-mono text-xs">
-                        {sighting.latitude.toFixed(4)}, {sighting.longitude.toFixed(4)}
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Broj:</span>
+                      <span className="font-medium">{sighting.count} jedinki</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Prijavio:</span>
+                      <span className="font-medium">
+                        {userProfiles[sighting.user_id]?.full_name || "Nepoznato"}
                       </span>
                     </div>
-                  )}
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">Vrijeme:</span>
+                      <span className="font-medium">{new Date(sighting.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {sighting.latitude && sighting.longitude && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">Koordinate:</span>
+                        <span className="font-medium font-mono text-xs">
+                          {sighting.latitude.toFixed(4)}, {sighting.longitude.toFixed(4)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              {sighting.notes && (
-                <div className="mt-4 p-3 bg-muted rounded-md">
-                  <p className="text-sm font-medium mb-1">Napomene:</p>
-                  <p className="text-sm text-muted-foreground">{sighting.notes}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+
+                {/* Prikaz media attachments */}
+                {sightingMedia.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Image className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-muted-foreground">
+                        Priloženi fajlovi ({sightingMedia.length})
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      {sightingMedia.map((media) => (
+                        <MediaPreview key={media.id} media={media} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {sighting.notes && (
+                  <div className="mt-4 p-3 bg-muted rounded-md">
+                    <p className="text-sm font-medium mb-1">Napomene:</p>
+                    <p className="text-sm text-muted-foreground">{sighting.notes}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Media Preview komponenta
+function MediaPreview({ media }: { media: any }) {
+  const isImage = media.file_type.startsWith('image/')
+  const isVideo = media.file_type.startsWith('video/')
+  const fileSizeMB = (media.file_size / 1024 / 1024).toFixed(2)
+
+  return (
+    <div className="relative group">
+      {isImage ? (
+        <div className="aspect-square rounded-lg border overflow-hidden bg-gray-100">
+          <img
+            src={media.file_url}
+            alt={media.description || media.file_name}
+            className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
+            onClick={() => window.open(media.file_url, '_blank')}
+          />
+        </div>
+      ) : isVideo ? (
+        <div 
+          className="aspect-square rounded-lg border overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+          onClick={() => window.open(media.file_url, '_blank')}
+        >
+          <div className="text-center">
+            <Video className="w-8 h-8 text-gray-500 mx-auto mb-1" />
+            <span className="text-xs text-gray-600">Video</span>
+          </div>
+        </div>
+      ) : (
+        <div className="aspect-square rounded-lg border overflow-hidden bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <File className="w-8 h-8 text-gray-500 mx-auto mb-1" />
+            <span className="text-xs text-gray-600">Fajl</span>
+          </div>
+        </div>
+      )}
+      
+      {/* File info overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all flex items-end p-2 opacity-0 group-hover:opacity-100">
+        <div className="text-white text-xs">
+          <div className="font-medium truncate">{media.file_name}</div>
+          <div>{fileSizeMB} MB</div>
+        </div>
       </div>
     </div>
   )

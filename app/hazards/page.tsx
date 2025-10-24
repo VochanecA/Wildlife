@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { NewHazardDialog } from "@/components/new-hazard-dialog"
 import { HazardStatusDropdown } from "@/components/hazard-status-dropdown"
-import { Plus, Search, Filter, Clock, User, MapPin } from "lucide-react"
+import { Plus, Search, Filter, Clock, User, MapPin, Image, Video, File } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function HazardsPage({
@@ -23,6 +23,21 @@ export default async function HazardsPage({
     .from("hazard_reports")
     .select("*")
     .order("created_at", { ascending: false })
+
+  // Dohvati media attachments za sve opasnosti
+  const hazardIds = hazards?.map(h => h.id) || []
+  let mediaAttachments: any[] = []
+
+  if (hazardIds.length > 0) {
+    const { data: media } = await supabase
+      .from("media_attachments")
+      .select("*")
+      .eq("entity_type", "hazard")
+      .in("entity_id", hazardIds)
+      .order("created_at", { ascending: false })
+
+    mediaAttachments = media || []
+  }
 
   if (error) {
     console.error("Error fetching hazards:", error)
@@ -192,87 +207,114 @@ export default async function HazardsPage({
         <TabsContent value={activeTab} className="mt-6">
           <div className="grid gap-4">
             {filteredHazards.length > 0 ? (
-              filteredHazards.map((hazard) => (
-                <Card key={hazard.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1 flex-1">
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-xl">{hazard.title}</CardTitle>
-                        </div>
-                        <CardDescription>{hazard.description}</CardDescription>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <MapPin className="w-3 h-3" />
-                          {hazard.location}
-                        </div>
-                      </div>
-                      <div className="flex gap-2 flex-col items-end">
-                        <Badge className={getSeverityColor(hazard.severity)}>
-                          {hazard.severity === "critical" && "Kritično"}
-                          {hazard.severity === "high" && "Visoko"}
-                          {hazard.severity === "medium" && "Srednje"}
-                          {hazard.severity === "low" && "Nisko"}
-                        </Badge>
-                        <Badge className={getPriorityColor(hazard.priority)}>
-                          {hazard.priority === "urgent" && "Hitan"}
-                          {hazard.priority === "high" && "Visok"}
-                          {hazard.priority === "medium" && "Srednji"}
-                          {hazard.priority === "low" && "Nizak"}
-                        </Badge>
-                        <HazardStatusDropdown 
-                          hazardId={hazard.id} 
-                          currentStatus={hazard.status} 
-                        />
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Prijavio:</span>
-                          <span className="font-medium">
-                            {userProfiles[hazard.user_id]?.full_name || "Nepoznato"}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Prijavljeno:</span>
-                          <span className="font-medium">{new Date(hazard.created_at).toLocaleString()}</span>
-                        </div>
-                        {hazard.latitude && hazard.longitude && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <MapPin className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Koordinate:</span>
-                            <span className="font-medium font-mono text-xs">
-                              {hazard.latitude.toFixed(4)}, {hazard.longitude.toFixed(4)}
-                            </span>
+              filteredHazards.map((hazard) => {
+                const hazardMedia = mediaAttachments.filter(media => media.entity_id === hazard.id)
+                
+                return (
+                  <Card key={hazard.id} className="hover:shadow-md transition-shadow">
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1 flex-1">
+                          <div className="flex items-center gap-2">
+                            <CardTitle className="text-xl">{hazard.title}</CardTitle>
+                            {hazardMedia.length > 0 && (
+                              <Badge variant="secondary" className="flex items-center gap-1">
+                                <Image className="w-3 h-3" />
+                                {hazardMedia.length}
+                              </Badge>
+                            )}
                           </div>
-                        )}
+                          <CardDescription>{hazard.description}</CardDescription>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <MapPin className="w-3 h-3" />
+                            {hazard.location}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 flex-col items-end">
+                          <Badge className={getSeverityColor(hazard.severity)}>
+                            {hazard.severity === "critical" && "Kritično"}
+                            {hazard.severity === "high" && "Visoko"}
+                            {hazard.severity === "medium" && "Srednje"}
+                            {hazard.severity === "low" && "Nisko"}
+                          </Badge>
+                          <Badge className={getPriorityColor(hazard.priority)}>
+                            {hazard.priority === "urgent" && "Hitan"}
+                            {hazard.priority === "high" && "Visok"}
+                            {hazard.priority === "medium" && "Srednji"}
+                            {hazard.priority === "low" && "Nizak"}
+                          </Badge>
+                          <HazardStatusDropdown 
+                            hazardId={hazard.id} 
+                            currentStatus={hazard.status} 
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-3">
-                        {hazard.assigned_to && (
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-3">
                           <div className="flex items-center gap-2 text-sm">
                             <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Dodijeljeno:</span>
+                            <span className="text-muted-foreground">Prijavio:</span>
                             <span className="font-medium">
-                              {userProfiles[hazard.assigned_to]?.full_name || "Nepoznato"}
+                              {userProfiles[hazard.user_id]?.full_name || "Nepoznato"}
                             </span>
                           </div>
-                        )}
-                        {hazard.resolved_at && (
                           <div className="flex items-center gap-2 text-sm">
                             <Clock className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Riješeno:</span>
-                            <span className="font-medium">{new Date(hazard.resolved_at).toLocaleString()}</span>
+                            <span className="text-muted-foreground">Prijavljeno:</span>
+                            <span className="font-medium">{new Date(hazard.created_at).toLocaleString()}</span>
                           </div>
-                        )}
+                          {hazard.latitude && hazard.longitude && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <MapPin className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Koordinate:</span>
+                              <span className="font-medium font-mono text-xs">
+                                {hazard.latitude.toFixed(4)}, {hazard.longitude.toFixed(4)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-3">
+                          {hazard.assigned_to && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <User className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Dodijeljeno:</span>
+                              <span className="font-medium">
+                                {userProfiles[hazard.assigned_to]?.full_name || "Nepoznato"}
+                              </span>
+                            </div>
+                          )}
+                          {hazard.resolved_at && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Clock className="w-4 h-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Riješeno:</span>
+                              <span className="font-medium">{new Date(hazard.resolved_at).toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
+
+                      {/* Prikaz media attachments */}
+                      {hazardMedia.length > 0 && (
+                        <div className="mt-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Image className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Priloženi fajlovi ({hazardMedia.length})
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                            {hazardMedia.map((media) => (
+                              <MediaPreview key={media.id} media={media} />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )
+              })
             ) : (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
@@ -292,6 +334,53 @@ export default async function HazardsPage({
           </div>
         </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+// Media Preview komponenta
+function MediaPreview({ media }: { media: any }) {
+  const isImage = media.file_type.startsWith('image/')
+  const isVideo = media.file_type.startsWith('video/')
+  const fileSizeMB = (media.file_size / 1024 / 1024).toFixed(2)
+
+  return (
+    <div className="relative group">
+      {isImage ? (
+        <div className="aspect-square rounded-lg border overflow-hidden bg-gray-100">
+          <img
+            src={media.file_url}
+            alt={media.description || media.file_name}
+            className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
+            onClick={() => window.open(media.file_url, '_blank')}
+          />
+        </div>
+      ) : isVideo ? (
+        <div 
+          className="aspect-square rounded-lg border overflow-hidden bg-gray-100 flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors"
+          onClick={() => window.open(media.file_url, '_blank')}
+        >
+          <div className="text-center">
+            <Video className="w-8 h-8 text-gray-500 mx-auto mb-1" />
+            <span className="text-xs text-gray-600">Video</span>
+          </div>
+        </div>
+      ) : (
+        <div className="aspect-square rounded-lg border overflow-hidden bg-gray-100 flex items-center justify-center">
+          <div className="text-center">
+            <File className="w-8 h-8 text-gray-500 mx-auto mb-1" />
+            <span className="text-xs text-gray-600">Fajl</span>
+          </div>
+        </div>
+      )}
+      
+      {/* File info overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all flex items-end p-2 opacity-0 group-hover:opacity-100">
+        <div className="text-white text-xs">
+          <div className="font-medium truncate">{media.file_name}</div>
+          <div>{fileSizeMB} MB</div>
+        </div>
+      </div>
     </div>
   )
 }
