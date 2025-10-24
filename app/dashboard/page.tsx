@@ -7,6 +7,7 @@ import { NewHazardDialog } from "@/components/new-hazard-dialog"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { NewSightingDialog } from "@/components/new-sighting-dialog"
+import Link from "next/link" // Dodajte ovaj import
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -56,6 +57,7 @@ export default async function DashboardPage() {
       icon: Bird,
       color: "text-blue-600",
       bgGradient: "from-blue-500 to-blue-600",
+      href: "/sightings" // Dodajte href
     },
     {
       title: "Aktivne Opasnosti",
@@ -64,6 +66,7 @@ export default async function DashboardPage() {
       icon: AlertTriangle,
       color: "text-red-600",
       bgGradient: "from-red-500 to-orange-600",
+      href: "/hazards" // Dodajte href
     },
     {
       title: "Neodrađeni Zadaci",
@@ -72,6 +75,7 @@ export default async function DashboardPage() {
       icon: CheckSquare,
       color: "text-green-600",
       bgGradient: "from-green-500 to-emerald-600",
+      href: "/tasks" // Dodajte href
     },
     {
       title: "AI Asistent",
@@ -80,6 +84,7 @@ export default async function DashboardPage() {
       icon: Brain,
       color: "text-purple-600",
       bgGradient: "from-purple-500 to-indigo-600",
+      href: "#" // AI Asistent ostaje na istoj stranici
     },
   ]
 
@@ -105,20 +110,26 @@ export default async function DashboardPage() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-700">{stat.title}</CardTitle>
-              <div className={`p-2 rounded-lg bg-gradient-to-r ${stat.bgGradient}`}>
-                <stat.icon className="w-4 h-4 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold bg-gradient-to-r ${stat.bgGradient} bg-clip-text text-transparent`}>
-                {stat.value}
-              </div>
-              <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
-            </CardContent>
-          </Card>
+          <Link 
+            key={stat.title} 
+            href={stat.href}
+            className="block" // Ovo osigurava da Link zauzima cijeli prostor
+          >
+            <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-700">{stat.title}</CardTitle>
+                <div className={`p-2 rounded-lg bg-gradient-to-r ${stat.bgGradient} group-hover:scale-110 transition-transform`}>
+                  <stat.icon className="w-4 h-4 text-white" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold bg-gradient-to-r ${stat.bgGradient} bg-clip-text text-transparent`}>
+                  {stat.value}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
 
@@ -164,6 +175,15 @@ export default async function DashboardPage() {
                   <p>Nema skorašnje aktivnosti</p>
                 </div>
               )}
+            </div>
+            {/* Dodajte link za više zapažanja */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <Link 
+                href="/sightings" 
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center justify-center"
+              >
+                Pogledaj sva zapažanja →
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -221,6 +241,15 @@ export default async function DashboardPage() {
                 </div>
               )}
             </div>
+            {/* Dodajte link za više zadataka */}
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <Link 
+                href="/tasks" 
+                className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center justify-center"
+              >
+                Pogledaj sve zadatke →
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
@@ -229,7 +258,9 @@ export default async function DashboardPage() {
           <WildlifeAIChatCard />
         </Card>
       </div>
-<DailyAnalysisCard />
+
+      <DailyAnalysisCard />
+
       {/* Quick Actions Footer */}
       <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
         <div className="flex items-center justify-between">
@@ -238,18 +269,18 @@ export default async function DashboardPage() {
             <p className="text-sm text-gray-600">Odmah pristupi najvažnijim funkcijama</p>
           </div>
           <div className="flex space-x-3">
-          <NewSightingDialog>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Novo Zapažanje
-            </Button>
-          </NewSightingDialog>
-          <NewHazardDialog>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Novi Izvještaj o Opasnosti
-            </Button>
-          </NewHazardDialog>
+            <NewSightingDialog>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Zapažanje
+              </Button>
+            </NewSightingDialog>
+            <NewHazardDialog>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Novi Izvještaj o Opasnosti
+              </Button>
+            </NewHazardDialog>
           </div>
         </div>
       </div>
