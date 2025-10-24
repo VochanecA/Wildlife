@@ -3,6 +3,10 @@ import { Bird, AlertTriangle, CheckSquare, TrendingUp, Brain, User, Calendar, Ma
 import { createClient } from "@/lib/supabase/server"
 import { WildlifeAIChatCard } from "@/components/wildlife-ai-chat-card"
 import { DailyAnalysisCard } from "@/components/daily-analysis-card"
+import { NewHazardDialog } from "@/components/new-hazard-dialog"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
+import { NewSightingDialog } from "@/components/new-sighting-dialog"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -234,14 +238,18 @@ export default async function DashboardPage() {
             <p className="text-sm text-gray-600">Odmah pristupi najvažnijim funkcijama</p>
           </div>
           <div className="flex space-x-3">
-            <button className="bg-white border border-gray-300 hover:border-blue-500 text-gray-700 px-4 py-2 rounded-lg transition-all hover:shadow-md flex items-center space-x-2">
-              <Bird className="w-4 h-4" />
-              <span>Novo posmatranje</span>
-            </button>
-            <button className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white px-4 py-2 rounded-lg transition-all hover:shadow-md flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4" />
-              <span>Prijavi opasnost</span>
-            </button>
+          <NewSightingDialog>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Zapažanje
+            </Button>
+          </NewSightingDialog>
+          <NewHazardDialog>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Novi Izvještaj o Opasnosti
+            </Button>
+          </NewHazardDialog>
           </div>
         </div>
       </div>
