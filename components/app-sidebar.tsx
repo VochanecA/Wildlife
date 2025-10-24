@@ -6,6 +6,7 @@ import {
   Home,
   Volume2,
   Bird,
+  Clock,
   AlertTriangle,
   CheckSquare,
   Calendar,
@@ -50,6 +51,7 @@ const menuItems = [
   { title: "Predikcije Rizika", icon: Brain, url: "/predictions" },
   { title: "Izvještaji", icon: FileText, url: "/reports" },
   { title: "Oprema", icon: Settings, url: "/equipment" },
+    { title: "Obračun satnica", icon: Clock, url: "/plate" },
   { title: "Pregled Karte", icon: Map, url: "/map" },
   { title: "Offline Režim", icon: WifiOff, url: "/offline" },
 ]
