@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bird, AlertTriangle, CheckSquare, TrendingUp, Brain, User, Calendar, MapPin } from "lucide-react"
+import { Bird, AlertTriangle, CheckSquare, TrendingUp, Brain, User, Calendar, MapPin, Mail } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { WildlifeAIChatCard } from "@/components/wildlife-ai-chat-card"
 import { DailyAnalysisCard } from "@/components/daily-analysis-card"
@@ -11,7 +11,7 @@ import Link from "next/link"
 import { WeatherCard } from "@/components/weather-card"
 import { ExtendedForecast } from "@/components/extended-forecast"
 import { getWeatherData, getExtendedForecast } from "@/lib/weather"
-
+import { MessagesCard } from "@/components/message-card" // DODAJ OVAJ IMPORT
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -110,7 +110,6 @@ export default async function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center space-x-3">
-        
             <div className="bg-white/20 p-3 rounded-full">
               <User className="w-8 h-8" />
             </div>
@@ -118,8 +117,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid sa Weather */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      {/* Stats Grid sa Weather i Messages */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         <div className="lg:col-span-1">
           <WeatherCard initialData={weatherData} />
         </div>
@@ -128,7 +127,7 @@ export default async function DashboardPage() {
           <Link 
             key={stat.title} 
             href={stat.href}
-            className="block"
+            className="block lg:col-span-1"
           >
             <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer group h-full">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -146,6 +145,11 @@ export default async function DashboardPage() {
             </Card>
           </Link>
         ))}
+        
+        {/* Messages Card - DODAJ OVAJ DIO */}
+        <div className="lg:col-span-1">
+          <MessagesCard />
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -277,29 +281,30 @@ export default async function DashboardPage() {
         <DailyAnalysisCard />
         <ExtendedForecast initialData={forecastData} />
       </div>
-{/* Quick Actions Footer - OPTIMIZOVANO ZA MOBILNE */}
-<div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-4 sm:p-6 border border-gray-200">
-  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-    <div className="text-center sm:text-left">
-      <h3 className="font-semibold text-gray-800 text-lg sm:text-xl">Brze akcije</h3>
-      <p className="text-sm text-gray-600 mt-1">Odmah pristupi najvažnijim funkcijama</p>
-    </div>
-    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-      <NewSightingDialog>
-        <Button className="w-full sm:w-auto justify-center sm:justify-start">
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Zapažanje
-        </Button>
-      </NewSightingDialog>
-      <NewHazardDialog>
-        <Button className="w-full sm:w-auto justify-center sm:justify-start">
-          <Plus className="w-4 h-4 mr-2" />
-          Novi Izvještaj
-        </Button>
-      </NewHazardDialog>
-    </div>
-  </div>
-</div>
+
+      {/* Quick Actions Footer - OPTIMIZOVANO ZA MOBILNE */}
+      <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-4 sm:p-6 border border-gray-200">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-center sm:text-left">
+            <h3 className="font-semibold text-gray-800 text-lg sm:text-xl">Brze akcije</h3>
+            <p className="text-sm text-gray-600 mt-1">Odmah pristupi najvažnijim funkcijama</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <NewSightingDialog>
+              <Button className="w-full sm:w-auto justify-center sm:justify-start">
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Zapažanje
+              </Button>
+            </NewSightingDialog>
+            <NewHazardDialog>
+              <Button className="w-full sm:w-auto justify-center sm:justify-start">
+                <Plus className="w-4 h-4 mr-2" />
+                Novi Izvještaj
+              </Button>
+            </NewHazardDialog>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
