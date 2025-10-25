@@ -136,83 +136,93 @@ export function ExtendedForecast({ initialData }: ExtendedForecastProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <Card className="w-full">
+      <CardHeader className="pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <CardTitle className="text-sm">7-Dnevna Prognoza</CardTitle>
-            <CardDescription>Detaljna vremenska prognoza za narednih 7 dana</CardDescription>
+            <CardTitle className="text-base sm:text-sm">7-Dnevna Prognoza</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Detaljna vremenska prognoza za narednih 7 dana
+            </CardDescription>
           </div>
           <Button 
             onClick={refreshForecast} 
             disabled={isRefreshing} 
             variant="outline" 
             size="sm"
+            className="w-full sm:w-auto"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             {isRefreshing ? 'Ažuriranje...' : 'Osveži'}
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
+      <CardContent className="pt-0">
+        <div className="space-y-2">
           {daily.time.map((date, index) => {
             const weatherInfo = getWeatherInfo(daily.weather_code[index]);
             const isToday = index === 0;
             
             return (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="flex items-center space-x-3 flex-1">
-                  <div className="text-center w-16">
-                    <div className="font-medium text-sm">
+              <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                {/* Datum i dan */}
+                <div className="flex items-center space-x-2 sm:space-x-3 flex-1 min-w-0">
+                  <div className="text-center w-12 sm:w-16 shrink-0">
+                    <div className="font-medium text-xs sm:text-sm leading-tight">
                       {formatWeekday(date, isToday)}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 leading-tight">
                       {formatDate(date)}
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    {getWeatherIcon(weatherInfo.icon, "w-6 h-6")}
-                    <div className="w-20">
-                      <div className="text-xs text-gray-600 leading-tight">
+                  {/* Vremenska ikona i opis */}
+                  <div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-1">
+                    {getWeatherIcon(weatherInfo.icon, "w-4 h-4 sm:w-6 sm:h-6")}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs text-gray-600 leading-tight line-clamp-2">
                         {weatherInfo.description}
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-4 text-sm">
-                  {/* Temperature */}
-                  <div className="text-right w-16">
-                    <div className="font-semibold">{Math.round(daily.temperature_2m_max[index])}°</div>
-                    <div className="text-gray-500 text-xs">{Math.round(daily.temperature_2m_min[index])}°</div>
+                {/* Vremenski podaci - optimizovano za mobilne */}
+                <div className="flex items-center space-x-2 sm:space-x-3 text-xs ml-2">
+                  {/* Temperature - uvijek prikazujemo */}
+                  <div className="text-right w-10 sm:w-12 shrink-0">
+                    <div className="font-semibold text-xs sm:text-sm">
+                      {Math.round(daily.temperature_2m_max[index])}°
+                    </div>
+                    <div className="text-gray-500 text-xs">
+                      {Math.round(daily.temperature_2m_min[index])}°
+                    </div>
                   </div>
 
-                  {/* Precipitation */}
-                  {hasPrecipitationData && daily.precipitation_probability_max[index] > 0 && (
-                    <div className="flex items-center space-x-1 w-12">
-                      <Umbrella className="w-3 h-3 text-blue-500" />
-                      <div className="text-xs">
+                  {/* Padavine - prikazujemo samo ako ima kiše */}
+                  {hasPrecipitationData && daily.precipitation_probability_max[index] > 10 && (
+                    <div className="hidden xs:flex items-center space-x-1 w-8 sm:w-12 shrink-0">
+                      <Umbrella className="w-3 h-3 text-blue-500 shrink-0" />
+                      <div className="text-xs leading-tight">
                         <div>{Math.round(daily.precipitation_sum[index] || 0)}mm</div>
                         <div className="text-gray-500">{Math.round(daily.precipitation_probability_max[index] || 0)}%</div>
                       </div>
                     </div>
                   )}
 
-                  {/* Wind */}
-                  {hasWindData && (
-                    <div className="flex items-center space-x-1 w-12">
-                      <Wind className="w-3 h-3 text-gray-500" />
+                  {/* Vjetar - prikazujemo samo ako je jak */}
+                  {hasWindData && daily.wind_speed_10m_max[index] > 15 && (
+                    <div className="hidden sm:flex items-center space-x-1 w-10 sm:w-12 shrink-0">
+                      <Wind className="w-3 h-3 text-gray-500 shrink-0" />
                       <div className="text-xs">
-                        {Math.round(daily.wind_speed_10m_max[index])} km/h
+                        {Math.round(daily.wind_speed_10m_max[index])}
                       </div>
                     </div>
                   )}
 
-                  {/* Sunrise/Sunset - samo za danas i ako su podaci dostupni */}
+                  {/* Sunrise/Sunset - samo za danas i na većim ekranima */}
                   {isToday && hasSunData && (
-                    <div className="flex items-center space-x-2 text-xs w-20">
+                    <div className="hidden md:flex items-center space-x-1 text-xs w-16 shrink-0">
                       <div className="text-right">
                         <div className="flex items-center space-x-1">
                           <Sunrise className="w-3 h-3 text-orange-500" />
@@ -226,9 +236,9 @@ export function ExtendedForecast({ initialData }: ExtendedForecastProps) {
                     </div>
                   )}
 
-                  {/* UV Index za danas */}
+                  {/* UV Index - samo za danas i na tabletima/desktopu */}
                   {isToday && daily.uv_index_max && (
-                    <div className="flex items-center space-x-1 text-xs">
+                    <div className="hidden lg:flex items-center space-x-1 text-xs shrink-0">
                       <Gauge className="w-3 h-3 text-purple-500" />
                       <div>
                         <div>UV</div>
@@ -242,9 +252,9 @@ export function ExtendedForecast({ initialData }: ExtendedForecastProps) {
           })}
         </div>
 
-        {/* Legend */}
-        <div className="mt-4 pt-3 border-t border-gray-200">
-          <div className="grid grid-cols-2 gap-2 text-xs text-gray-500">
+        {/* Legend - sakriven na mobilnim */}
+        <div className="mt-3 pt-3 border-t border-gray-200 hidden sm:block">
+          <div className="grid grid-cols-1 xs:grid-cols-2 gap-2 text-xs text-gray-500">
             <div className="space-y-1">
               <div className="flex items-center space-x-2">
                 <span>🌡️ Max/Min temperatura</span>
@@ -265,6 +275,13 @@ export function ExtendedForecast({ initialData }: ExtendedForecastProps) {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Mobile hint */}
+        <div className="mt-2 sm:hidden">
+          <p className="text-xs text-gray-500 text-center">
+            💡 Dodirnite stavku za više detalja
+          </p>
         </div>
       </CardContent>
     </Card>

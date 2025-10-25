@@ -191,3 +191,45 @@ CREATE TABLE public.equipment_usage (
   CONSTRAINT equipment_usage_equipment_id_fkey FOREIGN KEY (equipment_id) REFERENCES public.equipment(id),
   CONSTRAINT equipment_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
 );
+
+dodato za sound history:
+-- Tabela za praćenje korištenja repelent zvukova
+CREATE TABLE public.bird_sound_usage (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  bird_species text NOT NULL,
+  sound_type text NOT NULL CHECK (sound_type = ANY (ARRAY['bird'::text, 'gunshot'::text])),
+  duration_seconds integer NOT NULL,
+  location text,
+  latitude numeric,
+  longitude numeric,
+  effectiveness_rating integer CHECK (effectiveness_rating >= 1 AND effectiveness_rating <= 5),
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  
+  CONSTRAINT bird_sound_usage_pkey PRIMARY KEY (id),
+  CONSTRAINT bird_sound_usage_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+
+-- Enable RLS
+ALTER TABLE public.bird_sound_usage ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY "Users can view their own sound usage" ON public.bird_sound_usage
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own sound usage" ON public.bird_sound_usage
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Supervisors can view all sound usage" ON public.bird_sound_usage
+  FOR SELECT USING (
+    auth.uid() IN (
+      SELECT id FROM public.profiles WHERE role IN ('supervisor', 'admin')
+    )
+  );
+
+  dodato za sound history:
+  -- Opcionalno: Dodajte ova polja ako želite više detalja
+ALTER TABLE public.bird_sound_usage 
+ADD COLUMN IF NOT EXISTS audio_file_name text,
+ADD COLUMN IF NOT EXISTS playback_count integer DEFAULT 1;

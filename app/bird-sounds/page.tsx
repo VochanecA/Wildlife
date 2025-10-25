@@ -1,6 +1,7 @@
 // app/bird-sounds/page.tsx
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BirdSoundsPlayer } from "@/components/bird-sounds-player"
+import { BirdSoundsHistory } from "@/components/bird-sound-history"
 
 export default function BirdSoundsPage() {
   return (
@@ -45,26 +46,26 @@ export default function BirdSoundsPage() {
 
         <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
           <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-t-lg p-4">
-            <CardTitle className="text-white">Upotreba na terenu</CardTitle>
+            <CardTitle className="text-white">Praćenje Aktivnosti</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-3">
               <div className="flex items-start space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
                 <p className="text-sm text-gray-700">
-                  Koristite u kombinaciji sa vizuelnim repelentima
+                  Sva korištenja se automatski bilježe
                 </p>
               </div>
               <div className="flex items-start space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
                 <p className="text-sm text-gray-700">
-                  Rotirajte zvukove da spriječite navikavanje
+                  Pregled statistike i trendova
                 </p>
               </div>
               <div className="flex items-start space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
                 <p className="text-sm text-gray-700">
-                  Prilagodite jačinu prema vremenskim uslovima
+                  Optimizacija strategije kontrole
                 </p>
               </div>
             </div>
@@ -102,6 +103,9 @@ export default function BirdSoundsPage() {
 
       {/* Bird Sounds Player Component */}
       <BirdSoundsPlayer />
+
+      {/* Bird Sounds History & Statistics */}
+      <BirdSoundsHistory />
     </div>
   )
 }

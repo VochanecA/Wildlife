@@ -277,30 +277,29 @@ export default async function DashboardPage() {
         <DailyAnalysisCard />
         <ExtendedForecast initialData={forecastData} />
       </div>
-
-      {/* Quick Actions Footer */}
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-6 border border-gray-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-gray-800">Brze akcije</h3>
-            <p className="text-sm text-gray-600">Odmah pristupi najvažnijim funkcijama</p>
-          </div>
-          <div className="flex space-x-3">
-            <NewSightingDialog>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Zapažanje
-              </Button>
-            </NewSightingDialog>
-            <NewHazardDialog>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Novi Izvještaj o Opasnosti
-              </Button>
-            </NewHazardDialog>
-          </div>
-        </div>
-      </div>
+{/* Quick Actions Footer - OPTIMIZOVANO ZA MOBILNE */}
+<div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-2xl p-4 sm:p-6 border border-gray-200">
+  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div className="text-center sm:text-left">
+      <h3 className="font-semibold text-gray-800 text-lg sm:text-xl">Brze akcije</h3>
+      <p className="text-sm text-gray-600 mt-1">Odmah pristupi najvažnijim funkcijama</p>
+    </div>
+    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+      <NewSightingDialog>
+        <Button className="w-full sm:w-auto justify-center sm:justify-start">
+          <Plus className="w-4 h-4 mr-2" />
+          Novo Zapažanje
+        </Button>
+      </NewSightingDialog>
+      <NewHazardDialog>
+        <Button className="w-full sm:w-auto justify-center sm:justify-start">
+          <Plus className="w-4 h-4 mr-2" />
+          Novi Izvještaj
+        </Button>
+      </NewHazardDialog>
+    </div>
+  </div>
+</div>
     </div>
   )
 }

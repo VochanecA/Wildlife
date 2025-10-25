@@ -5,6 +5,8 @@ import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Play, Pause, Volume2, Download, AlertTriangle } from "lucide-react"
+import { createClient } from '@/lib/supabase/client'
+import { useToast } from '@/hooks/use-toast'
 
 interface BirdSound {
   id: string
@@ -112,8 +114,29 @@ export function BirdSoundsPlayer() {
   const [currentlyPlaying, setCurrentlyPlaying] = useState<string | null>(null)
   const [progress, setProgress] = useState<number>(0)
   const [isLooping, setIsLooping] = useState<boolean>(false)
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const startTimeRef = useRef<number | null>(null)
+  const { toast } = useToast()
+  const supabase = createClient()
+
+  useEffect(() => {
+    // Dobijanje lokacije korisnika
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          })
+        },
+        (error) => {
+          console.log('Location access denied or unavailable:', error)
+        }
+      )
+    }
+  }, [])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -131,9 +154,8 @@ export function BirdSoundsPlayer() {
         audio.currentTime = 0
         audio.play().catch(console.error)
       } else {
-        // Ako nije loop, zaustavi reprodukciju
-        setCurrentlyPlaying(null)
-        setProgress(0)
+        // Ako nije loop, zaustavi reprodukciju i zabilježi korištenje
+        handleStopSound()
       }
     }
 
@@ -155,16 +177,43 @@ export function BirdSoundsPlayer() {
     }
   }, [])
 
-  const playSound = (bird: BirdSound) => {
+  // Funkcija za bilježenje korištenja zvuka u bazu
+  const logSoundUsage = async (bird: BirdSound, durationSeconds: number) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        console.error('User not authenticated')
+        return
+      }
+
+      const { error } = await supabase
+        .from('bird_sound_usage')
+        .insert({
+          user_id: user.id,
+          bird_species: bird.name,
+          sound_type: bird.type,
+          duration_seconds: durationSeconds,
+          location: userLocation ? `Lat: ${userLocation.latitude}, Lng: ${userLocation.longitude}` : 'Aerodrom Tivat',
+          latitude: userLocation?.latitude || null,
+          longitude: userLocation?.longitude || null,
+          notes: `Automatski zabilježeno korištenje repelent zvuka za ${bird.name}`
+        })
+
+      if (error) {
+        console.error('Error logging sound usage:', error)
+      } else {
+        console.log('Sound usage logged successfully')
+      }
+    } catch (error) {
+      console.error('Error in logSoundUsage:', error)
+    }
+  }
+
+  const playSound = async (bird: BirdSound) => {
     if (currentlyPlaying === bird.id) {
       // Pauziraj trenutni zvuk
-      audioRef.current?.pause()
-      setCurrentlyPlaying(null)
-      setIsLooping(false)
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-        intervalRef.current = null
-      }
+      handleStopSound()
     } else {
       // Zaustavi prethodni zvuk i pokreni novi
       if (audioRef.current) {
@@ -178,6 +227,9 @@ export function BirdSoundsPlayer() {
       audio.loop = false // Koristimo manual loop zbog bolje kontrole
       audioRef.current = audio
       
+      // Zabilježi početak reprodukcije
+      startTimeRef.current = Date.now()
+      
       // Pokreni reprodukciju
       audio.play().catch(error => {
         console.error('Error playing audio:', error)
@@ -189,6 +241,12 @@ export function BirdSoundsPlayer() {
       setProgress(0)
       setIsLooping(true) // Automatski uključi loop
 
+      // Prikaži toast poruku
+      toast({
+        title: "🎵 Repelent aktiviran",
+        description: `Zvuk za ${bird.name} je pokrenut (auto-repeat)`,
+      })
+
       // Simuliraj loop ako audio ne postoji
       if (!bird.audioUrl.startsWith('/sounds/')) {
         simulateLoopPlayback(bird)
@@ -196,14 +254,47 @@ export function BirdSoundsPlayer() {
     }
   }
 
+  const handleStopSound = async () => {
+    const stopTime = Date.now()
+    let durationSeconds = 0
+
+    // Izračunaj trajanje reprodukcije
+    if (startTimeRef.current) {
+      durationSeconds = Math.round((stopTime - startTimeRef.current) / 1000)
+    }
+
+    // Zabilježi korištenje ako je zvuk pušten barem 1 sekundu
+    if (durationSeconds >= 1 && currentlyPlaying) {
+      const bird = birdSounds.find(b => b.id === currentlyPlaying)
+      if (bird) {
+        await logSoundUsage(bird, durationSeconds)
+      }
+    }
+
+    // Resetuj stanje
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+    setCurrentlyPlaying(null)
+    setProgress(0)
+    setIsLooping(false)
+    startTimeRef.current = null
+    
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
+  }
+
   const simulateAudioPlayback = (bird: BirdSound) => {
     const duration = parseInt(bird.duration) * 1000 || 20000
     setProgress(0)
+    startTimeRef.current = Date.now()
     
     // Simuliraj progres
-    const startTime = Date.now()
     intervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTime
+      const elapsed = Date.now() - (startTimeRef.current || Date.now())
       const newProgress = (elapsed / duration) * 100
       
       if (newProgress >= 100) {
@@ -216,8 +307,7 @@ export function BirdSoundsPlayer() {
         if (isLooping && currentlyPlaying === bird.id) {
           setTimeout(() => simulateAudioPlayback(bird), 100)
         } else {
-          setCurrentlyPlaying(null)
-          setProgress(0)
+          handleStopSound()
         }
       } else {
         setProgress(newProgress)
@@ -228,11 +318,11 @@ export function BirdSoundsPlayer() {
   const simulateLoopPlayback = (bird: BirdSound) => {
     const duration = parseInt(bird.duration) * 1000 || 20000
     setProgress(0)
+    startTimeRef.current = Date.now()
     
     const playLoop = () => {
-      const startTime = Date.now()
       intervalRef.current = setInterval(() => {
-        const elapsed = Date.now() - startTime
+        const elapsed = Date.now() - (startTimeRef.current || Date.now())
         const newProgress = (elapsed / duration) * 100
         
         if (newProgress >= 100) {
@@ -243,10 +333,10 @@ export function BirdSoundsPlayer() {
           }
           // Ponovi loop ako je još uvijek aktivan
           if (currentlyPlaying === bird.id && isLooping) {
+            startTimeRef.current = Date.now()
             setTimeout(playLoop, 100)
           } else {
-            setCurrentlyPlaying(null)
-            setProgress(0)
+            handleStopSound()
           }
         } else {
           setProgress(newProgress)
@@ -257,26 +347,18 @@ export function BirdSoundsPlayer() {
     playLoop()
   }
 
-  const stopSound = () => {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
-    }
-    setCurrentlyPlaying(null)
-    setProgress(0)
-    setIsLooping(false)
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
-    }
-  }
-
   const downloadSound = (bird: BirdSound) => {
     // Simuliraj download (u pravoj implementaciji koristi pravi download)
     const link = document.createElement('a')
     link.href = bird.audioUrl
     link.download = `${bird.name.toLowerCase()}-repellent.mp3`
     link.click()
+
+    // Zabilježi download ako želite
+    toast({
+      title: "📥 Download započet",
+      description: `Zvuk za ${bird.name} se preuzima`,
+    })
   }
 
   const getCardStyle = (bird: BirdSound) => {
@@ -305,6 +387,9 @@ export function BirdSoundsPlayer() {
         </h2>
         <p className="text-gray-600">
           Odaberite vrstu i pustite repelent zvuk za kontrolu (automatski repeat)
+        </p>
+        <p className="text-sm text-blue-600 mt-2">
+          📍 Sva korištenja se automatski bilježe u sistem
         </p>
       </div>
 
@@ -440,6 +525,7 @@ export function BirdSoundsPlayer() {
               </h3>
               <div className="space-y-2 text-sm text-gray-700">
                 <p>• <strong>Zvuk se automatski ponavlja</strong> dok se ne zaustavi</p>
+                <p>• <strong>Sva korištenja se bilježe</strong> u bazu podataka automatski</p>
                 <p>• Koristite zvučnike sa dobrim frekventnim odzivom</p>
                 <p>• Rotirajte zvukove svakih 2-3 sata da spriječite navikavanje</p>
                 <p>• <strong>Gunshot repelent</strong> - samo za hitne situacije!</p>
