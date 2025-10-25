@@ -20,6 +20,7 @@ import {
   FileText,
   User as UserIcon,
   Settings,
+  Satellite,
 } from "lucide-react"
 import {
   Sidebar,
@@ -37,7 +38,7 @@ import { useRouter, usePathname } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
-import { useEffect, useState } from "react" // DODAJTE useState
+import { useEffect, useState } from "react"
 
 const menuItems = [
   { title: "Kontrolna Tabla", icon: Home, url: "/dashboard" },
@@ -54,6 +55,13 @@ const menuItems = [
   { title: "Obračun satnica", icon: Clock, url: "/plate" },
   { title: "Pregled Karte", icon: Map, url: "/map" },
   { title: "Offline Režim", icon: WifiOff, url: "/offline" },
+  { 
+    title: "LIVE WIDS", 
+    icon: Satellite, 
+    url: "/tv-display",
+    isLive: true, // Dodajemo flag za LIVE item
+     altText: "View live info on TIV Wildlife Information Display System"
+  },
 ]
 
 interface AppSidebarProps {
@@ -88,17 +96,22 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
     router.refresh()
   }
 
-  const getIconColor = (url: string) => {
+  const getIconColor = (url: string, isLive?: boolean) => {
     const isActive = pathname === url
+    if (isLive && !isActive) {
+      return "text-red-500"
+    }
     return isActive ? "text-white" : "text-blue-600"
   }
 
-  const getButtonStyle = (url: string) => {
+  const getButtonStyle = (url: string, isLive?: boolean) => {
     const isActive = pathname === url
     return cn(
-      "w-full transition-all duration-200",
+      "w-full transition-all duration-200 relative",
       isActive 
         ? "bg-gradient-to-r from-blue-600 to-green-600 text-white shadow-lg" 
+        : isLive
+        ? "text-red-700 hover:bg-gradient-to-r hover:from-red-50 hover:to-orange-50 hover:text-red-700 hover:shadow-md border border-red-200/50"
         : "text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-green-50 hover:text-blue-700 hover:shadow-md"
     )
   }
@@ -118,10 +131,10 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
 
   return (
     <Sidebar 
-      className="border-r-0 bg-gradient-to-b from-gray-50 to-white shadow-xl"
-      data-sidebar="sidebar" // Dodajte data atribut za lakše pronalaženje
+      className="border-r-0 bg-linear-to-b from-gray-50 to-white shadow-xl"
+      data-sidebar="sidebar"
     >
-      <SidebarHeader className="border-b border-gray-200/50 p-6 bg-gradient-to-r from-blue-600 to-green-600">
+      <SidebarHeader className="border-b border-gray-200/50 p-6 bg-linear-to-r from-blue-600 to-green-600">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
             <Plane className="w-6 h-6 text-white" />
@@ -139,30 +152,69 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
             Glavni Meni
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className={getButtonStyle(item.url)}>
-                    <Link 
-                      href={item.url} 
-                      className="flex items-center gap-3 p-3 rounded-xl"
-                      scroll={false}
-                      onClick={handleLinkClick} // DODAJTE OVO
-                    >
-                      <div className={cn(
-                        "p-2 rounded-lg transition-all duration-200",
-                        pathname === item.url 
-                          ? "bg-white/20" 
-                          : "bg-blue-50"
-                      )}>
-                        <item.icon className={cn("w-4 h-4", getIconColor(item.url))} />
-                      </div>
-                      <span className="font-medium text-sm">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
+<SidebarMenu className="space-y-1">
+  {menuItems.map((item) => (
+    <SidebarMenuItem key={item.title}>
+      <SidebarMenuButton asChild className={getButtonStyle(item.url, item.isLive)}>
+        <Link 
+          href={item.url} 
+          className="flex items-center gap-3 p-3 rounded-xl relative"
+          scroll={false}
+          onClick={handleLinkClick}
+          title={item.altText || item.title} // DODAJ OVO
+        >
+          {/* Pulsirajući efekt za LIVE WIDS kada nije aktivan */}
+          {item.isLive && pathname !== item.url && (
+            <div className="absolute -left-1 -top-1">
+              <div className="relative">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-ping absolute"></div>
+                <div className="w-3 h-3 bg-red-600 rounded-full relative"></div>
+              </div>
+            </div>
+          )}
+          
+          <div className={cn(
+            "p-2 rounded-lg transition-all duration-200 relative",
+            pathname === item.url 
+              ? "bg-white/20" 
+              : item.isLive
+              ? "bg-red-50 animate-pulse"
+              : "bg-blue-50"
+          )}>
+            <item.icon 
+              className={cn(
+                "w-4 h-4", 
+                getIconColor(item.url, item.isLive)
+              )} 
+              aria-label={item.altText ? undefined : item.title} // DODAJ OVO
+            />
+            
+            {/* Dodatni pulsirajući efekt unutar ikonice za LIVE */}
+            {item.isLive && pathname !== item.url && (
+              <div className="absolute inset-0 rounded-lg bg-red-200 animate-ping opacity-75"></div>
+            )}
+          </div>
+          
+          <span className={cn(
+            "font-medium text-sm",
+            item.isLive && pathname !== item.url && "text-red-700 font-semibold"
+          )}>
+            {item.title}
+          </span>
+          
+          {/* LIVE badge za aktivan item */}
+          {item.isLive && pathname === item.url && (
+            <div className="ml-auto">
+              <div className="bg-white/30 px-2 py-1 rounded-full text-xs font-bold text-white animate-pulse">
+                LIVE
+              </div>
+            </div>
+          )}
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  ))}
+</SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
@@ -179,8 +231,8 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
       <SidebarFooter className="border-t border-gray-200/50 p-4 bg-white/50 backdrop-blur-sm">
         <div className="space-y-3">
           {/* User Profile */}
-          <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-blue-50 to-green-50 rounded-xl border border-blue-200/50">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-600 rounded-full flex items-center justify-center">
+          <div className="flex items-center gap-3 p-3 bg-linear-to-r from-blue-50 to-green-50 rounded-xl border border-blue-200/50">
+            <div className="w-10 h-10 bg-linear-to-r from-blue-600 to-green-600 rounded-full flex items-center justify-center">
               <UserIcon className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">

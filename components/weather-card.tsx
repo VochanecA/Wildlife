@@ -63,6 +63,11 @@ export function WeatherCard({ initialData }: WeatherCardProps) {
     return date.toLocaleTimeString('bs-BA', { hour: '2-digit', minute: '2-digit' })
   }
 
+  // Formatiranje padavina na 2 decimalna mjesta
+  const formatPrecipitation = (precipitation: number) => {
+    return precipitation.toFixed(2)
+  }
+
   if (!weatherData) {
     return (
       <Card className="w-full">
@@ -158,7 +163,7 @@ export function WeatherCard({ initialData }: WeatherCardProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Padavine:</span>
-              <span className="font-medium">{current.precipitation} mm</span>
+              <span className="font-medium">{formatPrecipitation(current.precipitation)} mm</span>
             </div>
           </div>
         </div>

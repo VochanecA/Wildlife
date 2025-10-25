@@ -90,41 +90,49 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6 p-4">
       {/* Welcome Header sa Quick Actions */}
-      <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-2xl p-6 text-white shadow-lg">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-white/20 p-3 rounded-full">
-                <User className="w-8 h-8" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">
-                  Dobrodošao nazad, {profile?.full_name || user?.email} 👋
-                </h1>
-                <p className="text-blue-100 text-lg mt-1">
-                  Evo pregleda aktivnosti upravljanja divljim životinjama na Aerodromu Tivat
-                </p>
-              </div>
-            </div>
+<div className="bg-linear-to-r from-blue-600 to-green-600 rounded-2xl p-4 sm:p-6 text-white shadow-lg">
+<div className="bg-linear-to-r from-blue-600 to-green-600 rounded-2xl p-3 sm:p-4 text-white shadow-lg">
+  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+    <div className="flex-1 w-full">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-2">
+        <div className="bg-white/20 p-1.5 sm:p-2 rounded-full self-start sm:self-center">
+          <User className="w-5 h-5 sm:w-7 sm:h-7" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-col">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+              Dobrodošao nazad,
+            </h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-orange-300 break-all">
+              {profile?.full_name || user?.email} 👋
+            </h1>
           </div>
-          
-          {/* Quick Actions Button Group */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            <NewSightingDialog>
-              <Button className="w-full lg:w-auto justify-center bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm transition-all duration-200">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Zapažanje
-              </Button>
-            </NewSightingDialog>
-            <NewHazardDialog>
-              <Button className="w-full lg:w-auto justify-center bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm transition-all duration-200">
-                <Zap className="w-4 h-4 mr-2" />
-                Novi Izvještaj
-              </Button>
-            </NewHazardDialog>
-          </div>
+          <p className="text-blue-100 text-sm sm:text-lg mt-0.5">
+            Evo pregleda aktivnosti upravljanja divljim<br className="hidden sm:block" />
+            životinjama na Aerodromu Tivat
+          </p>
         </div>
       </div>
+    </div>
+    
+    {/* Quick Actions Button Group */}
+    <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+      <NewSightingDialog>
+        <Button className="w-full lg:w-auto justify-center bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm transition-all duration-200 text-sm sm:text-base py-1.5">
+          <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+          Novo Zapažanje
+        </Button>
+      </NewSightingDialog>
+      <NewHazardDialog>
+        <Button className="w-full lg:w-auto justify-center bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm transition-all duration-200 text-sm sm:text-base py-1.5">
+          <Zap className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+          Novi Izvještaj
+        </Button>
+      </NewHazardDialog>
+    </div>
+  </div>
+</div>
+</div>
 
       {/* Prvi red: Weather, 3 stat carda i Messages */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
