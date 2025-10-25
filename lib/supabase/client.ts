@@ -1,3 +1,4 @@
+// "use client" //dodato za klijentski kod 25.10.2025
 import { createBrowserClient } from "@supabase/ssr"
 
 export function createClient() {

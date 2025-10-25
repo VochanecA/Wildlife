@@ -14,7 +14,6 @@ import {
   BarChart3,
   Map,
   LogOut,
- 
   WifiOff,
   Plane,
   Brain,
@@ -37,7 +36,8 @@ import {
 import { useRouter, usePathname } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { cn } from "@/lib/utils"
-import Link from "next/link" // DODAJTE OVO
+import Link from "next/link"
+import { useEffect, useState } from "react" // DODAJTE useState
 
 const menuItems = [
   { title: "Kontrolna Tabla", icon: Home, url: "/dashboard" },
@@ -51,7 +51,7 @@ const menuItems = [
   { title: "Predikcije Rizika", icon: Brain, url: "/predictions" },
   { title: "Izvještaji", icon: FileText, url: "/reports" },
   { title: "Oprema", icon: Settings, url: "/equipment" },
-    { title: "Obračun satnica", icon: Clock, url: "/plate" },
+  { title: "Obračun satnica", icon: Clock, url: "/plate" },
   { title: "Pregled Karte", icon: Map, url: "/map" },
   { title: "Offline Režim", icon: WifiOff, url: "/offline" },
 ]
@@ -67,6 +67,19 @@ interface AppSidebarProps {
 export function AppSidebar({ user, profile }: AppSidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detektuj da li je mobilni uređaj
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -90,8 +103,24 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
     )
   }
 
+  // Funkcija za rukovanje klikom na link - zatvara sidebar na mobilnim
+  const handleLinkClick = () => {
+    if (isMobile) {
+      // Pronađi i zatvori sidebar klikom na close button ili trigger
+      const sidebar = document.querySelector('[data-sidebar="sidebar"]') as HTMLElement
+      const closeButton = document.querySelector('[data-sidebar="trigger"]') as HTMLElement
+      
+      if (sidebar && closeButton) {
+        closeButton.click() // Simuliraj klik na close button
+      }
+    }
+  }
+
   return (
-    <Sidebar className="border-r-0 bg-gradient-to-b from-gray-50 to-white shadow-xl">
+    <Sidebar 
+      className="border-r-0 bg-gradient-to-b from-gray-50 to-white shadow-xl"
+      data-sidebar="sidebar" // Dodajte data atribut za lakše pronalaženje
+    >
       <SidebarHeader className="border-b border-gray-200/50 p-6 bg-gradient-to-r from-blue-600 to-green-600">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
@@ -117,7 +146,8 @@ export function AppSidebar({ user, profile }: AppSidebarProps) {
                     <Link 
                       href={item.url} 
                       className="flex items-center gap-3 p-3 rounded-xl"
-                      scroll={false} // OVO SPRJEČAVA AUTOMATSKO SKROLANJE
+                      scroll={false}
+                      onClick={handleLinkClick} // DODAJTE OVO
                     >
                       <div className={cn(
                         "p-2 rounded-lg transition-all duration-200",

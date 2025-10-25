@@ -233,3 +233,6 @@ CREATE POLICY "Supervisors can view all sound usage" ON public.bird_sound_usage
 ALTER TABLE public.bird_sound_usage 
 ADD COLUMN IF NOT EXISTS audio_file_name text,
 ADD COLUMN IF NOT EXISTS playback_count integer DEFAULT 1;
+
+dodato za equipment status update:
+ALTER TABLE equipment ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();

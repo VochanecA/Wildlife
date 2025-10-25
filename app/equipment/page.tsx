@@ -2,11 +2,41 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase/server"
-import { Plus, Wrench, Camera, Car, Zap, Settings, MapPin, Calendar, Download } from "lucide-react"
-import Link from "next/link"
+import { Plus, Wrench, Camera, Car, Zap, Settings, MapPin, Calendar, Download, BarChart3, Edit } from "lucide-react"
 import { AddEquipmentDialog } from "@/components/add-equipment-dialog"
 import { EquipmentPDFExportButton } from "@/components/equipment-pdf-export-button"
 import { getEquipmentReport } from "@/lib/equipment"
+import { EquipmentStatusDialog } from "@/components/equipment-status-dialog"
+
+interface Equipment {
+  id: string
+  name: string
+  type: string
+  status: string
+  location?: string | null
+  last_maintenance?: string | null
+  next_maintenance?: string | null
+  notes?: string | null
+  created_at: string
+}
+
+interface EquipmentUsage {
+  id: string
+  equipment_id: string
+  user_id: string
+  task_id?: string | null
+  start_time: string
+  end_time?: string | null
+  notes?: string | null
+  created_at: string
+  equipment?: {
+    name: string
+    type: string
+  } | null
+  profiles?: {
+    full_name: string
+  } | null
+}
 
 export default async function EquipmentPage() {
   const supabase = await createClient()
@@ -48,7 +78,7 @@ export default async function EquipmentPage() {
     }
   }
 
-  const getTypeLabel = (type: string) => {
+  const getTypeLabel = (type: string): string => {
     switch (type) {
       case 'repellent':
         return "Repelent"
@@ -67,7 +97,7 @@ export default async function EquipmentPage() {
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): string => {
     switch (status) {
       case 'available':
         return "bg-green-100 text-green-800"
@@ -82,7 +112,7 @@ export default async function EquipmentPage() {
     }
   }
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string): string => {
     switch (status) {
       case 'available':
         return "Dostupno"
@@ -99,8 +129,22 @@ export default async function EquipmentPage() {
 
   // Calculate statistics
   const totalEquipment = equipment?.length || 0
-  const availableEquipment = equipment?.filter(e => e.status === 'available').length || 0
-  const maintenanceEquipment = equipment?.filter(e => e.status === 'maintenance').length || 0
+  const availableEquipment = equipment?.filter((e: Equipment) => e.status === 'available').length || 0
+  const maintenanceEquipment = equipment?.filter((e: Equipment) => e.status === 'maintenance').length || 0
+  const inUseEquipment = equipment?.filter((e: Equipment) => e.status === 'in_use').length || 0
+
+  // Calculate equipment by type statistics
+  const equipmentByType = equipment?.reduce((acc: Record<string, number>, item: Equipment) => {
+    acc[item.type] = (acc[item.type] || 0) + 1
+    return acc
+  }, {}) || {}
+
+  // Calculate equipment usage statistics
+  const usageByType = usage?.reduce((acc: Record<string, number>, item: EquipmentUsage) => {
+    const type = item.equipment?.type || 'other'
+    acc[type] = (acc[type] || 0) + 1
+    return acc
+  }, {}) || {}
 
   return (
     <div className="space-y-6">
@@ -161,10 +205,95 @@ export default async function EquipmentPage() {
             <Car className="w-4 h-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {equipment?.filter(e => e.status === 'in_use').length || 0}
-            </div>
+            <div className="text-2xl font-bold">{inUseEquipment}</div>
             <p className="text-xs text-muted-foreground">Aktivno korištenje</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Statistics Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Equipment by Type Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Oprema po Vrsti
+            </CardTitle>
+            <CardDescription>
+              Raspodjela opreme prema tipu
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Object.entries(equipmentByType).map(([type, count]) => (
+                <div key={type} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {getTypeIcon(type)}
+                    <span className="font-medium">{getTypeLabel(type)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 h-2 rounded-full" 
+                        style={{ 
+                          width: `${totalEquipment > 0 ? (count as number / totalEquipment) * 100 : 0}%` 
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium w-8 text-right">{count as number}</span>
+                  </div>
+                </div>
+              ))}
+              {Object.keys(equipmentByType).length === 0 && (
+                <div className="text-center py-4 text-muted-foreground">
+                  Nema podataka za prikaz
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Usage by Type Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              Upotreba po Vrsti
+            </CardTitle>
+            <CardDescription>
+              Najkorištenije vrste opreme
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {Object.entries(usageByType)
+                .sort(([, a], [, b]) => (b as number) - (a as number))
+                .map(([type, count]) => (
+                  <div key={type} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {getTypeIcon(type)}
+                      <span className="font-medium">{getTypeLabel(type)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-green-600 h-2 rounded-full" 
+                          style={{ 
+                            width: `${usage && usage.length > 0 ? (count as number / usage.length) * 100 : 0}%` 
+                          }}
+                        />
+                      </div>
+                      <span className="text-sm font-medium w-8 text-right">{count as number}</span>
+                    </div>
+                  </div>
+                ))}
+              {Object.keys(usageByType).length === 0 && (
+                <div className="text-center py-4 text-muted-foreground">
+                  Nema podataka o upotrebi
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -184,7 +313,7 @@ export default async function EquipmentPage() {
           <CardContent>
             <div className="space-y-4">
               {equipment && equipment.length > 0 ? (
-                equipment.map((item) => (
+                equipment.map((item: Equipment) => (
                   <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -204,10 +333,15 @@ export default async function EquipmentPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex items-center gap-2">
                       <Badge className={getStatusColor(item.status)}>
                         {getStatusLabel(item.status)}
                       </Badge>
+                      <EquipmentStatusDialog equipment={item}>
+                        <Button variant="outline" size="sm">
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                      </EquipmentStatusDialog>
                       {item.next_maintenance && (
                         <div className="text-xs text-muted-foreground mt-1">
                           Servis: {new Date(item.next_maintenance).toLocaleDateString('bs-BA')}
@@ -241,7 +375,7 @@ export default async function EquipmentPage() {
           <CardContent>
             <div className="space-y-3">
               {usage && usage.length > 0 ? (
-                usage.map((record) => (
+                usage.map((record: EquipmentUsage) => (
                   <div key={record.id} className="flex items-center justify-between p-3 border rounded">
                     <div>
                       <div className="font-medium">{record.equipment?.name}</div>
@@ -251,7 +385,7 @@ export default async function EquipmentPage() {
                       </div>
                     </div>
                     <Badge variant="outline">
-                      {getTypeLabel(record.equipment?.type)}
+                      {getTypeLabel(record.equipment?.type || 'other')}
                     </Badge>
                   </div>
                 ))
@@ -268,7 +402,7 @@ export default async function EquipmentPage() {
       </div>
 
       {/* Maintenance Alerts */}
-      {equipment && equipment.filter(e => 
+      {equipment && equipment.filter((e: Equipment) => 
         e.next_maintenance && new Date(e.next_maintenance) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       ).length > 0 && (
         <Card className="border-orange-200 bg-orange-50">
@@ -284,17 +418,24 @@ export default async function EquipmentPage() {
           <CardContent>
             <div className="space-y-2">
               {equipment
-                .filter(e => e.next_maintenance && new Date(e.next_maintenance) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))
-                .map((item) => (
+                .filter((e: Equipment) => e.next_maintenance && new Date(e.next_maintenance) <= new Date(Date.now() + 7 * 24 * 60 * 60 * 1000))
+                .map((item: Equipment) => (
                   <div key={item.id} className="flex items-center justify-between p-2">
                     <div className="flex items-center gap-2">
                       <Wrench className="w-4 h-4 text-orange-600" />
                       <span className="font-medium">{item.name}</span>
                       <span className="text-sm text-orange-700">({getTypeLabel(item.type)})</span>
                     </div>
-                    <Badge variant="outline" className="bg-orange-100 text-orange-800">
-                      Servis: {new Date(item.next_maintenance!).toLocaleDateString('bs-BA')}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-orange-100 text-orange-800">
+                        Servis: {new Date(item.next_maintenance!).toLocaleDateString('bs-BA')}
+                      </Badge>
+                      <EquipmentStatusDialog equipment={item}>
+                        <Button variant="outline" size="sm">
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                      </EquipmentStatusDialog>
+                    </div>
                   </div>
                 ))}
             </div>

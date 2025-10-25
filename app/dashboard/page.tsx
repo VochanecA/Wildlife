@@ -1,17 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bird, AlertTriangle, CheckSquare, TrendingUp, Brain, User, Calendar, MapPin, Mail } from "lucide-react"
+import { Bird, AlertTriangle, CheckSquare, User, Calendar, MapPin, Plus, Zap } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { WildlifeAIChatCard } from "@/components/wildlife-ai-chat-card"
 import { DailyAnalysisCard } from "@/components/daily-analysis-card"
 import { NewHazardDialog } from "@/components/new-hazard-dialog"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
 import { NewSightingDialog } from "@/components/new-sighting-dialog"
 import Link from "next/link"
 import { WeatherCard } from "@/components/weather-card"
 import { ExtendedForecast } from "@/components/extended-forecast"
 import { getWeatherData, getExtendedForecast } from "@/lib/weather"
-import { MessagesCard } from "@/components/message-card" // DODAJ OVAJ IMPORT
+import { MessagesCard } from "@/components/message-card"
+import { BirdSoundsStatsCard } from "@/components/bird-sounds-stats-card"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -85,40 +85,49 @@ export default async function DashboardPage() {
       bgGradient: "from-green-500 to-emerald-600",
       href: "/tasks"
     },
-    {
-      title: "AI Asistent",
-      value: "Dostupan",
-      change: "Spreman za pomoć",
-      icon: Brain,
-      color: "text-purple-600",
-      bgGradient: "from-purple-500 to-indigo-600",
-      href: "#"
-    },
   ]
 
   return (
     <div className="space-y-6 p-4">
-      {/* Welcome Header */}
+      {/* Welcome Header sa Quick Actions */}
       <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-2xl p-6 text-white shadow-lg">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight mb-2">
-              Dobrodošao nazad, {profile?.full_name || user?.email} 👋
-            </h1>
-            <p className="text-blue-100 text-lg">
-              Evo pregleda aktivnosti upravljanja divljim životinjama na Aerodromu Tivat
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="bg-white/20 p-3 rounded-full">
-              <User className="w-8 h-8" />
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-white/20 p-3 rounded-full">
+                <User className="w-8 h-8" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">
+                  Dobrodošao nazad, {profile?.full_name || user?.email} 👋
+                </h1>
+                <p className="text-blue-100 text-lg mt-1">
+                  Evo pregleda aktivnosti upravljanja divljim životinjama na Aerodromu Tivat
+                </p>
+              </div>
             </div>
+          </div>
+          
+          {/* Quick Actions Button Group */}
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+            <NewSightingDialog>
+              <Button className="w-full lg:w-auto justify-center bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm transition-all duration-200">
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Zapažanje
+              </Button>
+            </NewSightingDialog>
+            <NewHazardDialog>
+              <Button className="w-full lg:w-auto justify-center bg-white/20 hover:bg-white/30 text-white border border-white/30 backdrop-blur-sm transition-all duration-200">
+                <Zap className="w-4 h-4 mr-2" />
+                Novi Izvještaj
+              </Button>
+            </NewHazardDialog>
           </div>
         </div>
       </div>
 
-      {/* Stats Grid sa Weather i Messages */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
+      {/* Prvi red: Weather, 3 stat carda i Messages */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <div className="lg:col-span-1">
           <WeatherCard initialData={weatherData} />
         </div>
@@ -146,12 +155,18 @@ export default async function DashboardPage() {
           </Link>
         ))}
         
-        {/* Messages Card - DODAJ OVAJ DIO */}
+        {/* Messages Card */}
         <div className="lg:col-span-1">
           <MessagesCard />
         </div>
       </div>
 
+      {/* Drugi red: Bird Sounds Stats Card - CIJELA ŠIRINA */}
+      <div className="grid gap-4">
+        <BirdSoundsStatsCard />
+      </div>
+
+      {/* Treći red: Skorašnja Aktivnost, Zadaci i AI Asistent */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Skorašnja Aktivnost */}
         <Card className="border-0 shadow-lg">

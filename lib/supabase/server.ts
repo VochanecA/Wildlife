@@ -1,3 +1,4 @@
+// "use server" //dodao za serverski kod 25.10.2025
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
