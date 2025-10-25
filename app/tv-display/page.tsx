@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
-import { Volume2, Clock, MapPin, RefreshCw, AlertTriangle } from "lucide-react"
+import { Volume2, Clock, MapPin, RefreshCw, AlertTriangle, Maximize2, Minimize2 } from "lucide-react"
 
 // Dynamic import za mapu
 const TVMap = dynamic(() => import('./TVMap'), {
@@ -37,6 +37,35 @@ export default function TVDisplayPage() {
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
   const [refreshing, setRefreshing] = useState(false)
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0)
+  const [isFullScreen, setIsFullScreen] = useState(false)
+
+  // Funkcija za full screen
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.log(`Error attempting to enable full-screen mode: ${err.message}`)
+      })
+      setIsFullScreen(true)
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen()
+        setIsFullScreen(false)
+      }
+    }
+  }
+
+  // Pratimo promjene full screen stanja
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullScreenChange)
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullScreenChange)
+    }
+  }, [])
 
   const fetchSightings = async () => {
     try {
@@ -159,7 +188,7 @@ export default function TVDisplayPage() {
             <p className="text-gray-300 mt-1">Aerodrom Tivat - Real-time Bird Activity Monitoring</p>
           </div>
           <div className="text-right">
-            <div className="flex items-center gap-4 text-lg">
+            <div className="flex items-center gap-3 text-lg">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5" />
                 <span>{lastUpdate.toLocaleTimeString('bs-BA')}</span>
@@ -167,6 +196,21 @@ export default function TVDisplayPage() {
               <div className="text-gray-300">
                 {sightings.length} aktivnih zapažanja
               </div>
+              
+              {/* Full Screen Button */}
+              <button 
+                onClick={toggleFullScreen}
+                className="flex items-center justify-center p-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors"
+                title={isFullScreen ? "Close FULL SCREEN" : "Open FULL SCREEN"}
+              >
+                {isFullScreen ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </button>
+
+              {/* Refresh Button */}
               <button 
                 onClick={fetchSightings}
                 disabled={refreshing}
@@ -185,23 +229,23 @@ export default function TVDisplayPage() {
         <div className="flex justify-center items-center gap-8 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-red-500 animate-pulse"></div>
-            <span>Poslednjih 30 minuta (BLINK)</span>
+            <span>Posljednjih 30 minuta (BLINK)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-orange-500"></div>
-            <span>Poslednjih sat vremena</span>
+            <span>Posljednjih sat vremena</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
-            <span>Poslednja 3 sata</span>
+            <span>Posljednja 3 sata</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-blue-500"></div>
-            <span>Poslednjih 6 sati</span>
+            <span>Posljednjih 6 sati</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-green-500"></div>
-            <span>Poslednjih 10 sati</span>
+            <span>Posljednjih 10 sati</span>
           </div>
           <div className="flex items-center gap-2">
             <Volume2 className="w-4 h-4 text-purple-400" />
@@ -276,14 +320,13 @@ export default function TVDisplayPage() {
       <div className="bg-gray-800 text-white p-3 border-t border-gray-700">
         <div className="flex justify-between items-center text-sm">
           <div>
-            <span className="text-gray-300">Aerodrom Tivat Wildlife Management System; Ide, code and implementation by Alen, copyright 2025</span>
+            <span className="text-gray-300">Aerodrom Tivat Wildlife Management System; Idea, code and implementation by Alen, copyright 2025</span>
           </div>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-2">
               <RefreshCw className="w-3 h-3" />
               Auto-refresh: 60 sekundi
             </span>
-            {/* <span>Updateovano u: {lastUpdate.toLocaleTimeString('bs-BA')}</span> */}
             <span>Posljednje ažuriranje: {lastUpdate.toLocaleString('bs-BA')}</span>
           </div>
         </div>
