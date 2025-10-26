@@ -4,100 +4,107 @@ import { useState, useEffect } from 'react'
 import { 
   Plane, 
   Shield, 
-  Camera, 
   MapPin, 
-  Users, 
   BarChart3, 
-  Smartphone,
-  Wifi,
-  Database,
-  CheckCircle2,
-  ArrowRight,
   Sparkles,
-  Globe,
   Zap,
   ChevronRight,
   Bird,
   Eye,
-  AlertTriangle,
   Radio,
-  Satellite
+  Satellite,
+  Brain,
+  Activity
 } from "lucide-react"
+
+// Optimized icons - only import what's used
+const icons = {
+  Plane, Shield, MapPin, BarChart3, Sparkles, Zap, ChevronRight, 
+  Bird, Eye, Radio, Satellite, Brain, Activity
+}
 
 export default function ModernLandingPage() {
   const [scrolled, setScrolled] = useState(false)
-  const [activeFeature, setActiveFeature] = useState(0)
   const [colorIndex, setColorIndex] = useState(0)
+  const [isLoaded, setIsLoaded] = useState(false)
 
+  // Optimized colors array - removed black for better contrast
   const colors = [
     { bg: 'bg-red-500', text: 'text-white', border: 'border-red-600' },
     { bg: 'bg-orange-500', text: 'text-white', border: 'border-orange-600' },
     { bg: 'bg-blue-500', text: 'text-white', border: 'border-blue-600' },
     { bg: 'bg-green-600', text: 'text-white', border: 'border-green-700' },
-    { bg: 'bg-black', text: 'text-white', border: 'border-gray-800' }
+    { bg: 'bg-purple-600', text: 'text-white', border: 'border-purple-700' }
   ]
 
+  // Optimized scroll handler with throttling
   useEffect(() => {
+    let ticking = false
+    
     const handleScroll = () => {
-      setScrolled(window.scrollY > 50)
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 50)
+          ticking = false
+        })
+        ticking = true
+      }
     }
-    window.addEventListener('scroll', handleScroll)
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Optimized intervals with cleanup
   useEffect(() => {
-    const featureInterval = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % 3)
-    }, 4000)
-
+    setIsLoaded(true)
+    
     const colorInterval = setInterval(() => {
       setColorIndex((prev) => (prev + 1) % colors.length)
     }, 5000)
 
-    return () => {
-      clearInterval(featureInterval)
-      clearInterval(colorInterval)
-    }
-  }, [])
+    return () => clearInterval(colorInterval)
+  }, [colors.length])
 
+  // Optimized features data
   const features = [
     {
-      icon: <Bird className="w-6 h-6" />,
+      icon: <icons.Bird className="w-6 h-6" aria-hidden="true" />,
       title: "Real-time Bird Detection",
       description: "Instant notification system for bird activity within airport perimeter",
       color: "from-blue-500 to-cyan-500",
       items: ["Live tracking", "Automated alerts", "Species identification"]
     },
     {
-      icon: <MapPin className="w-6 h-6" />,
+      icon: <icons.MapPin className="w-6 h-6" aria-hidden="true" />,
       title: "Precise Location Mapping",
       description: "GPS-enabled wildlife sightings with exact coordinates on airport map",
       color: "from-emerald-500 to-teal-500",
       items: ["Interactive maps", "Hotspot analysis", "Movement patterns"]
     },
     {
-      icon: <Radio className="w-6 h-6" />,
+      icon: <icons.Radio className="w-6 h-6" aria-hidden="true" />,
       title: "Acoustic Repellent Control",
       description: "Remote activation of bird deterrent systems across airport areas",
       color: "from-purple-500 to-pink-500",
       items: ["Zone control", "Schedule management", "Effectiveness tracking"]
     },
     {
-      icon: <Eye className="w-6 h-6" />,
-      title: "24/7 Wildlife Monitoring",
-      description: "Continuous surveillance with automated reporting and analytics",
+      icon: <icons.Brain className="w-6 h-6" aria-hidden="true" />,
+      title: "AI-Powered Analytics",
+      description: "Advanced machine learning for wildlife behavior prediction and risk assessment",
       color: "from-orange-500 to-red-500",
-      items: ["Live camera feeds", "Activity logs", "Risk assessment"]
+      items: ["Pattern recognition", "Risk forecasting", "Predictive modeling"]
     },
     {
-      icon: <BarChart3 className="w-6 h-6" />,
-      title: "Predictive Analytics",
-      description: "AI-powered risk prediction and wildlife behavior analysis",
+      icon: <icons.BarChart3 className="w-6 h-6" aria-hidden="true" />,
+      title: "Comprehensive Reporting",
+      description: "Detailed analytics and automated reporting for wildlife management decisions",
       color: "from-rose-500 to-pink-600",
-      items: ["Risk forecasting", "Trend analysis", "Preventive measures"]
+      items: ["Custom reports", "Trend analysis", "Export capabilities"]
     },
     {
-      icon: <Satellite className="w-6 h-6" />,
+      icon: <icons.Satellite className="w-6 h-6" aria-hidden="true" />,
       title: "WIDS Live Display",
       description: "Public information system for real-time wildlife activity monitoring",
       color: "from-indigo-500 to-purple-600",
@@ -107,49 +114,62 @@ export default function ModernLandingPage() {
 
   const benefits = [
     {
-      icon: <Shield className="w-5 h-5" />,
+      icon: <icons.Shield className="w-5 h-5" aria-hidden="true" />,
       title: "Enhanced Flight Safety",
-      description: "Reduce bird strike risks during takeoff and landing operations",
+      description: "Reduce bird strike risks during takeoff and landing operations through proactive monitoring",
       gradient: "from-blue-500 to-cyan-500"
     },
     {
-      icon: <Database className="w-5 h-5" />,
-      title: "Centralized Data Hub",
-      description: "All wildlife observations and safety data in one secure platform",
+      icon: <icons.Activity className="w-5 h-5" aria-hidden="true" />,
+      title: "Intelligent Wildlife Monitoring",
+      description: "Advanced analytics and real-time tracking for comprehensive wildlife management",
       gradient: "from-emerald-500 to-teal-500"
     },
     {
-      icon: <BarChart3 className="w-5 h-5" />,
-      title: "Data-Driven Decisions",
-      description: "Make informed wildlife management decisions based on real analytics",
+      icon: <icons.BarChart3 className="w-5 h-5" aria-hidden="true" />,
+      title: "Data-Driven Wildlife Analysis",
+      description: "Make informed wildlife management decisions based on comprehensive analytics and insights",
       gradient: "from-purple-500 to-pink-500"
     },
     {
-      icon: <Globe className="w-5 h-5" />,
-      title: "ICAO Compliance",
-      description: "Meet international aviation safety standards for wildlife management",
+      icon: <icons.Shield className="w-5 h-5" aria-hidden="true" />,
+      title: "ICAO Compliance & Standards",
+      description: "Meet international aviation safety standards for wildlife hazard management",
       gradient: "from-orange-500 to-red-500"
     }
   ]
 
   const stats = [
-    { number: "99.7%", label: "Uptime Reliability" },
+    { number: "99.7%", label: "System Uptime" },
     { number: "24/7", label: "Live Monitoring" },
     { number: "<30s", label: "Alert Response" },
-    { number: "100+", label: "Daily Detections" }
+    { number: "AI", label: "Powered Analytics" }
   ]
 
+  // Optimized background pattern as CSS instead of data URL
+  const gridPattern = {
+    backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)`,
+    backgroundSize: '60px 60px'
+  }
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-x-hidden">
+    <div className="min-h-screen w-full bg-slate-900 text-white overflow-x-hidden">
       {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-slate-900/95 backdrop-blur-xl border-b border-slate-700' : 'bg-transparent'}`}>
+      <nav 
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          scrolled ? 'bg-slate-900/95 backdrop-blur-xl border-b border-slate-700' : 'bg-transparent'
+        }`}
+        role="navigation"
+        aria-label="Main navigation"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="relative">
+              <div className="relative" aria-hidden="true">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg blur opacity-75"></div>
                 <div className="relative bg-slate-800 p-2 rounded-lg border border-slate-700">
-                  <Plane className="w-5 h-5 text-cyan-400" />
+                  <icons.Plane className="w-5 h-5 text-cyan-400" />
                 </div>
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
@@ -157,12 +177,20 @@ export default function ModernLandingPage() {
               </span>
             </div>
             <div className="flex items-center gap-4">
-              <a href="/auth/login" className="hidden sm:block px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors hover:bg-slate-800 rounded-lg">
+              <a 
+                href="/auth/login" 
+                className="hidden sm:block px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors hover:bg-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                aria-label="Staff login"
+              >
                 Staff Login
               </a>
-              <a href="/tv-display" className="group relative px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-medium text-sm overflow-hidden transition-all hover:scale-105 border border-cyan-500/50">
+              <a 
+                href="/tv-display" 
+                className="group relative px-6 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg font-medium text-sm overflow-hidden transition-all hover:scale-105 border border-cyan-500/50 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                aria-label="View live WIDS dashboard"
+              >
                 <span className="relative z-10 flex items-center gap-2">
-                  Live WIDS <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  Live WIDS <icons.ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                 </span>
               </a>
             </div>
@@ -175,64 +203,90 @@ export default function ModernLandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full mb-8 backdrop-blur-sm">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <icons.Sparkles className="w-4 h-4 text-cyan-400" aria-hidden="true" />
               <span className="text-sm text-slate-300">Aerodrom Tivat - ICAO: LYTV</span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
               <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-3[rem] font-bold transform -rotate-6 transition-all duration-500 ${colors[colorIndex].bg} ${colors[colorIndex].text} ${colors[colorIndex].border} border`}>
-                  Airport
-                </span> Wildlife Intelligence
+                Wildlife Intelligence & 
               </span>
               <br />
-              <span className="text-white">Display System</span>
+              <span className="text-white">Analytics Platform</span>
             </h1>
             
-            <p className="text-xl text-slate-300 mb-10 max-w-3xl mx-auto leading-relaxed">
-              Advanced AI-powered platform for real-time wildlife monitoring and bird strike prevention. 
-              Protecting flights and enhancing aviation safety at Tivat International Airport.
+            {isLoaded && (
+              <div className="flex justify-center mb-6" aria-hidden="true">
+                <span 
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-xl sm:text-[3rem] font-bold transform -rotate-6 transition-all duration-500 ${
+                    colors[colorIndex].bg
+                  } ${colors[colorIndex].text} ${colors[colorIndex].border} border shadow-lg`}
+                >
+                  Tivat Airport
+                </span>
+              </div>
+            )}
+            
+            <p className="text-lg sm:text-xl text-slate-300 mb-10 max-w-3xl mx-auto leading-relaxed">
+              Advanced AI-powered platform combining real-time wildlife monitoring with comprehensive analytics. 
+              Protecting aviation safety through intelligent wildlife management and predictive risk assessment at Tivat International Airport.
             </p>
             
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto mb-16">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-2xl mx-auto mb-16">
               {stats.map((stat, index) => (
-                <div key={index} className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 backdrop-blur-sm">
-                  <div className="text-2xl font-bold text-cyan-400 mb-1">{stat.number}</div>
-                  <div className="text-sm text-slate-400">{stat.label}</div>
+                <div 
+                  key={index} 
+                  className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 backdrop-blur-sm"
+                  role="figure"
+                  aria-label={`${stat.number} ${stat.label}`}
+                >
+                  <div className="text-xl sm:text-2xl font-bold text-cyan-400 mb-1">{stat.number}</div>
+                  <div className="text-xs sm:text-sm text-slate-400">{stat.label}</div>
                 </div>
               ))}
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <a href="/tv-display" className="group relative px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl font-semibold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/30">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <a 
+                href="/tv-display" 
+                className="group relative px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl font-semibold text-base sm:text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/30 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                aria-label="View live wildlife information display system"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true"></div>
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                  <Eye className="w-5 h-5" />
+                  <icons.Eye className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                   View Live WIDS
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <icons.ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                 </span>
               </a>
               
-              <a href="/auth/login" className="px-8 py-4 bg-slate-800/50 border border-slate-700 rounded-xl font-semibold text-lg hover:bg-slate-800 hover:border-slate-600 transition-all backdrop-blur-sm flex items-center justify-center">
-                Staff Portal
+              <a 
+                href="/auth/login" 
+                className="px-6 sm:px-8 py-3 sm:py-4 bg-slate-800/50 border border-slate-700 rounded-xl font-semibold text-base sm:text-lg hover:bg-slate-800 hover:border-slate-600 transition-all backdrop-blur-sm flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+                aria-label="Access analytics portal"
+              >
+                <icons.BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+                Analytics Portal
               </a>
             </div>
 
             {/* Hero Visual */}
-            <div className="relative max-w-5xl mx-auto">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-3xl blur-3xl opacity-20"></div>
-              <div className="relative bg-slate-800/80 border border-slate-700 rounded-3xl p-8 backdrop-blur-xl">
-                <div className="aspect-video rounded-2xl bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-teal-500/10 flex items-center justify-center overflow-hidden relative border border-slate-700">
-                  <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-20"></div>
-                  <div className="relative z-10 text-center p-12">
-                    <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl mb-6 shadow-2xl">
-                      <Satellite className="w-12 h-12 text-white" />
+            <div className="relative max-w-4xl lg:max-w-5xl mx-auto">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-3xl blur-3xl opacity-20" aria-hidden="true"></div>
+              <div className="relative bg-slate-800/80 border border-slate-700 rounded-3xl p-6 sm:p-8 backdrop-blur-xl">
+                <div 
+                  className="aspect-video rounded-2xl bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-teal-500/10 flex items-center justify-center overflow-hidden relative border border-slate-700"
+                  style={gridPattern}
+                >
+                  <div className="relative z-10 text-center p-8 sm:p-12">
+                    <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl mb-4 sm:mb-6 shadow-2xl">
+                      <icons.Brain className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" aria-hidden="true" />
                     </div>
-                    <h3 className="text-3xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                      Live Airport Monitoring
-                    </h3>
-                    <p className="text-slate-400">Real-time wildlife activity tracking and alerts</p>
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                      Intelligent Monitoring & Analytics
+                    </h2>
+                    <p className="text-slate-400 text-sm sm:text-base">Real-time wildlife tracking with advanced AI-powered analysis</p>
                   </div>
                 </div>
               </div>
@@ -242,51 +296,54 @@ export default function ModernLandingPage() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12 sm:mb-16">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full mb-6">
-              <Zap className="w-4 h-4 text-cyan-400" />
-              <span className="text-sm text-slate-300">System Capabilities</span>
+              <icons.Zap className="w-4 h-4 text-cyan-400" aria-hidden="true" />
+              <span className="text-sm text-slate-300">Integrated System Capabilities</span>
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
               <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                Comprehensive Wildlife Management
+                Monitoring & Analytics Combined
               </span>
             </h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Advanced features designed specifically for airport wildlife control and aviation safety
+            <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto">
+              Comprehensive wildlife management platform integrating real-time monitoring with advanced analytical capabilities
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="group relative bg-slate-800/50 border border-slate-700 rounded-2xl p-6 hover:bg-slate-800 transition-all duration-300 hover:scale-105 hover:border-slate-600 backdrop-blur-sm"
+                className="group relative bg-slate-800/50 border border-slate-700 rounded-2xl p-4 sm:p-6 hover:bg-slate-800 transition-all duration-300 hover:scale-105 hover:border-slate-600 backdrop-blur-sm focus-within:ring-2 focus-within:ring-cyan-500 focus-within:ring-offset-2 focus-within:ring-offset-slate-900"
+                tabIndex={0}
+                role="article"
+                aria-label={`Feature: ${feature.title}`}
               >
-                <div className={`inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br ${feature.color} rounded-xl mb-5 shadow-lg group-hover:shadow-2xl transition-shadow border border-white/10`}>
-                  <div className="text-white">{feature.icon}</div>
+                <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br ${feature.color} rounded-xl mb-4 sm:mb-5 shadow-lg group-hover:shadow-2xl transition-shadow border border-white/10`}>
+                  {feature.icon}
                 </div>
                 
-                <h3 className="text-xl font-bold mb-3 text-white group-hover:text-cyan-400 transition-colors">
+                <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-3 text-white group-hover:text-cyan-400 transition-colors">
                   {feature.title}
                 </h3>
                 
-                <p className="text-slate-300 mb-4 text-sm leading-relaxed">
+                <p className="text-slate-300 mb-3 sm:mb-4 text-sm leading-relaxed">
                   {feature.description}
                 </p>
                 
-                <ul className="space-y-2">
+                <ul className="space-y-1 sm:space-y-2" role="list">
                   {feature.items.map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-sm text-slate-400">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                    <li key={i} className="flex items-center gap-2 text-xs sm:text-sm text-slate-400">
+                      <span className="w-2 h-2 bg-emerald-400 rounded-full flex-shrink-0" aria-hidden="true"></span>
                       {item}
                     </li>
                   ))}
                 </ul>
 
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-bl-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-bl-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true"></div>
               </div>
             ))}
           </div>
@@ -294,149 +351,76 @@ export default function ModernLandingPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+      <section className="py-16 sm:py-20 px-4 sm:px-6 lg:px-8 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full mb-6">
-                <Shield className="w-4 h-4 text-cyan-400" />
-                <span className="text-sm text-slate-300">Safety Benefits</span>
-              </div>
-              
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                Enhancing Aviation
-                <span className="block bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Safety Standards
-                </span>
-              </h2>
-              
-              <p className="text-xl text-slate-300 mb-10">
-                Protecting passengers, aircraft, and wildlife through advanced monitoring technology
-              </p>
-
-              <div className="space-y-6">
-                {benefits.map((benefit, index) => (
-                  <div
-                    key={index}
-                    className="group relative bg-slate-800/50 border border-slate-700 rounded-xl p-5 hover:bg-slate-800 transition-all hover:border-slate-600 backdrop-blur-sm"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className={`inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br ${benefit.gradient} rounded-lg flex-shrink-0 shadow-lg border border-white/10`}>
-                        <div className="text-white">{benefit.icon}</div>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold mb-2 text-white group-hover:text-cyan-400 transition-colors">
-                          {benefit.title}
-                        </h3>
-                        <p className="text-slate-300 text-sm leading-relaxed">
-                          {benefit.description}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-cyan-400 transition-colors mt-1" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+          <div className="text-center mb-12 sm:mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800/50 border border-slate-700 rounded-full mb-6">
+              <icons.Shield className="w-4 h-4 text-cyan-400" aria-hidden="true" />
+              <span className="text-sm text-slate-300">Comprehensive Benefits</span>
             </div>
-
-            <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-3xl blur-3xl opacity-20"></div>
-              <div className="relative bg-slate-800 border border-slate-700 rounded-3xl p-8 backdrop-blur-xl">
-                <div className="aspect-square rounded-2xl bg-gradient-to-br from-blue-500/10 via-cyan-500/10 to-teal-500/10 flex items-center justify-center overflow-hidden relative border border-slate-700">
-                  <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-20"></div>
-                  
-                  <div className="relative z-10 text-center p-12">
-                    <div className="inline-flex items-center justify-center w-32 h-32 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-3xl mb-8 shadow-2xl border border-white/10">
-                      <Plane className="w-16 h-16 text-white" />
-                    </div>
-                    
-                    <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                      Tivat Airport
-                    </h3>
-                    
-                    <p className="text-slate-300 text-lg mb-8">
-                      Wildlife Intelligence & Safety
-                    </p>
-                    
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-400 mb-1">ICAO</div>
-                        <div className="text-xs text-slate-400">LYTV</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-cyan-400 mb-1">WIDS</div>
-                        <div className="text-xs text-slate-400">Active</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                Aviation Safety Through Intelligence
+              </span>
+            </h2>
+            <p className="text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto">
+              Protecting aircraft, passengers, and wildlife through integrated monitoring and analytical solutions
+            </p>
           </div>
-        </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-3xl blur-2xl opacity-30"></div>
-            <div className="relative bg-slate-800 border border-slate-700 rounded-3xl p-12 text-center backdrop-blur-xl">
-              <AlertTriangle className="w-12 h-12 text-cyan-400 mx-auto mb-6" />
-              
-              <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                Live Wildlife
-                <span className="block bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Monitoring Active
-                </span>
-              </h2>
-              
-              <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
-                Real-time bird activity tracking and safety alerts operational at Tivat International Airport
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/tv-display" className="group relative px-8 py-4 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl font-semibold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-2xl hover:shadow-cyan-500/30 border border-cyan-500/50">
-                  <span className="relative z-10 flex items-center justify-center gap-2">
-                    <Eye className="w-5 h-5" />
-                    View Live Dashboard
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </span>
-                </a>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {benefits.map((benefit, index) => (
+              <div
+                key={index}
+                className="group relative bg-slate-800/50 border border-slate-700 rounded-2xl p-4 sm:p-6 hover:bg-slate-800 transition-all duration-300 hover:scale-105 hover:border-slate-600 backdrop-blur-sm text-center focus-within:ring-2 focus-within:ring-cyan-500 focus-within:ring-offset-2 focus-within:ring-offset-slate-900"
+                tabIndex={0}
+                role="article"
+                aria-label={`Benefit: ${benefit.title}`}
+              >
+                <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br ${benefit.gradient} rounded-2xl mb-3 sm:mb-4 shadow-lg group-hover:shadow-2xl transition-shadow border border-white/10 mx-auto`}>
+                  {benefit.icon}
+                </div>
                 
-                <a href="/auth/login" className="px-8 py-4 bg-slate-800 border border-slate-700 rounded-xl font-semibold text-lg hover:bg-slate-750 hover:border-slate-600 transition-all flex items-center justify-center">
-                  Staff Access
-                </a>
+                <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3 text-white group-hover:text-cyan-400 transition-colors">
+                  {benefit.title}
+                </h3>
+                
+                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                  {benefit.description}
+                </p>
+
+                <div className="mt-3 sm:mt-4">
+                  <icons.ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-slate-500 group-hover:text-cyan-400 transition-colors mx-auto" aria-hidden="true" />
+                </div>
+
+                <div className="absolute top-0 right-0 w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 rounded-bl-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true"></div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-700">
+      <footer className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-700" role="contentinfo">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 sm:gap-6">
             <div>
-              <div className="flex items-center gap-3 mb-3">
-                <div className="relative">
+              <div className="flex items-center gap-3 mb-2 sm:mb-3">
+                <div className="relative" aria-hidden="true">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg blur opacity-75"></div>
                   <div className="relative bg-slate-800 p-2 rounded-lg border border-slate-700">
-                    <Plane className="w-5 h-5 text-cyan-400" />
+                    <icons.Plane className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
                   </div>
                 </div>
-                <span className="text-xl font-bold">Tivat Airport WIDS</span>
+                <span className="text-lg sm:text-xl font-bold">Tivat Airport WIDS</span>
               </div>
-              <p className="text-slate-400 text-sm flex items-center gap-2">
-                <span>Wildlife Intelligence Display System</span>
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold transform -rotate-6 transition-all duration-500 ${colors[colorIndex].bg} ${colors[colorIndex].text} ${colors[colorIndex].border} border`}>
-                  Airport
-                </span>
+              <p className="text-slate-400 text-xs sm:text-sm">
+                Wildlife Monitoring & Analytics Platform
               </p>
             </div>
             
-            <div className="text-slate-400 text-sm">
-              <p>&copy; 2024 Tivat International Airport. All rights reserved.</p>
+            <div className="text-slate-400 text-xs sm:text-sm">
+              <p>&copy; {new Date().getFullYear()} Tivat International Airport. All rights reserved.</p>
             </div>
           </div>
         </div>
