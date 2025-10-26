@@ -28,6 +28,7 @@ export default function ModernLandingPage() {
   const [scrolled, setScrolled] = useState(false)
   const [colorIndex, setColorIndex] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   // Optimized colors array - removed black for better contrast
   const colors = [
@@ -193,22 +194,26 @@ export default function ModernLandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 min-h-screen">
         {/* Background Wildlife Image with Blur and Overlay */}
-        <div className="absolute inset-0 -z-10 overflow-hidden">
+        {/* <div className="absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm z-10"></div>
-          <Image
-            src="/wildlife.jpg"
-            alt="Wildlife monitoring at Tivat Airport"
-            fill
-            className="object-cover opacity-20 scale-110"
-            priority
-            quality={75}
-            sizes="100vw"
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R"
-          />
-        </div>
+          {!imageError ? (
+            <Image
+              src="/wildlife-hero.jpg"
+              alt="Wildlife monitoring at Tivat Airport"
+              fill
+              className="object-cover opacity-50"
+              priority
+              quality={75}
+              sizes="100vw"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            // Fallback gradient background if image fails to load
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-blue-900 opacity-70"></div>
+          )}
+        </div> */}
         
         <div className="max-w-7xl mx-auto relative z-20">
           <div className="text-center">
@@ -219,7 +224,7 @@ export default function ModernLandingPage() {
             
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
               <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-                Wildlife Intelligence & 
+                Wildlife Monitoring, Intelligence & 
               </span>
               <br />
               <span className="text-white">Analytics Platform</span>
@@ -279,46 +284,6 @@ export default function ModernLandingPage() {
                 <icons.BarChart3 className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
                 Analytics Portal
               </a>
-            </div>
-
-            {/* Hero Visual */}
-            <div className="relative max-w-4xl lg:max-w-5xl mx-auto">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-teal-500 rounded-3xl blur-3xl opacity-30" aria-hidden="true"></div>
-              <div className="relative bg-slate-800/90 border border-slate-700 rounded-3xl p-6 sm:p-8 backdrop-blur-xl">
-                <div className="aspect-video rounded-2xl bg-gradient-to-br from-blue-500/20 via-cyan-500/20 to-teal-500/20 flex items-center justify-center overflow-hidden relative border border-slate-600">
-                  {/* Wildlife Image Background */}
-                  <div className="absolute inset-0 opacity-10">
-                    <Image
-                      src="/wildlife.jpg"
-                      alt="Wildlife background"
-                      fill
-                      className="object-cover"
-                      quality={60}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
-                    />
-                  </div>
-                  
-                  {/* Grid Pattern Overlay */}
-                  <div 
-                    className="absolute inset-0"
-                    style={{
-                      backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                                      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)`,
-                      backgroundSize: '60px 60px'
-                    }}
-                  ></div>
-                  
-                  <div className="relative z-10 text-center p-8 sm:p-12">
-                    <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl mb-4 sm:mb-6 shadow-2xl">
-                      <icons.Brain className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-white" aria-hidden="true" />
-                    </div>
-                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                      Intelligent Monitoring & Analytics
-                    </h2>
-                    <p className="text-slate-300 text-sm sm:text-base">Real-time wildlife tracking with advanced AI-powered analysis</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
